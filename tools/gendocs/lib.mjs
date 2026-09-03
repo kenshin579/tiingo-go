@@ -129,3 +129,56 @@ export function renderPage({ title, sourceUrl, generatedAt, blocks }) {
   // 최종 문자열에 한 번 더 치환 — 코드블록 밖(문단·표)에 토큰이 렌더된 경우도 잡는다.
   return redactToken(parts.join('\n').replace(/\n{3,}/g, '\n\n').trimEnd() + '\n');
 }
+
+// ---- 인덱스 (docs/api/README.md) ----
+
+export const SOURCE_FILES = ['llms.txt', 'llms-full.txt'];
+const SOURCE_URL = (name) => `https://www.tiingo.com/${name}`;
+
+// parseSourceRows: 기존 README 의 원본 표 두 행에서 Last updated / 가져온 날짜를 읽는다.
+// fetch-docs.sh 가 sed 로 갱신하는 값이라, gendocs 가 README 를 다시 쓸 때 보존해야 한다.
+export function parseSourceRows(readme) {
+  const rows = {};
+  for (const name of SOURCE_FILES) {
+    const re = new RegExp(`^\\| \`${name.replace('.', '\\.')}\` \\| [^|]* \\| ([^|]*) \\| ([^|]*) \\|`, 'm');
+    const m = String(readme || '').match(re);
+    rows[name] = m ? { updated: m[1].trim(), fetched: m[2].trim() } : { updated: '-', fetched: '-' };
+  }
+  return rows;
+}
+
+// renderIndex: nav + 원본 표 → docs/api/README.md
+export function renderIndex(nav, sourceRows) {
+  const total = nav.reduce((n, g) => n + g.pages.length, 0);
+  const lines = [
+    '# Tiingo API 문서 카탈로그',
+    '',
+    `Tiingo 문서 사이트(https://www.tiingo.com/documentation) 를 자동 변환한 md 총 ${total}개 페이지(tools/gendocs)와`,
+    'Tiingo 가 공식 제공하는 llms 원본 2개를 보관합니다. `tiingo-go` SDK 개발의 1차 참조입니다.',
+    '',
+    '- 페이지 md: 웹 문서를 페이지 단위로 변환. 엔드포인트별 Request/Response 필드 표(타입·설명)와 Python 예시 + 응답 예시 JSON 포함.',
+    '- llms 원본: Tiingo 가 유지하는 개념·정책·플랜 제한·심볼 규칙의 source of truth. 일부 응답 필드는 타입 없이 이름만 나열돼 있어 페이지 md 로 보완.',
+    '',
+    '## 공식 원본 (Tiingo 제공)',
+    '',
+    '| 파일 | 출처 | Last updated | 가져온 날짜 |',
+    '| --- | --- | --- | --- |',
+    ...SOURCE_FILES.map((n) => `| \`${n}\` | ${SOURCE_URL(n)} | ${sourceRows[n].updated} | ${sourceRows[n].fetched} |`),
+    '',
+    '## 재생성',
+    '',
+    '```bash',
+    './scripts/fetch-docs.sh                      # llms.txt / llms-full.txt 갱신 (curl)',
+    'cd tools/gendocs && npm install && npx playwright install chromium && npm run gen   # 페이지 md 재생성',
+    '```',
+    '',
+    '## 페이지',
+    '',
+  ];
+  for (const g of nav) {
+    lines.push(`### ${g.group}`, '');
+    for (const p of g.pages) lines.push(`- [${p.title}](${g.dir}/${p.slug}.md)`);
+    lines.push('');
+  }
+  return lines.join('\n');
+}

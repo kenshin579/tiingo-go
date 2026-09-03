@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { slugFromHref, groupDir, buildNav, redactToken, escapeCell, renderTable, orderTabs, renderBlocks, renderPage } from './lib.mjs';
+import { slugFromHref, groupDir, buildNav, redactToken, escapeCell, renderTable, orderTabs, renderBlocks, renderPage, parseSourceRows, renderIndex } from './lib.mjs';
 
 test('slugFromHref returns last path segment', () => {
   assert.strictEqual(slugFromHref('/documentation/corporate-actions/dividends'), 'dividends');
@@ -194,4 +194,35 @@ test('renderBlocks renders tab headings at level+1 when called with level 3 or b
   const tabs = { type: 'tabs', tabs: [{ name: 'Request', blocks: [{ type: 'para', md: 'p' }] }] };
   assert.match(renderBlocks([tabs], 3), /^#### Request\n\np\n$/);
   assert.match(renderBlocks([tabs]), /^### Request\n\np\n$/);
+});
+
+test('parseSourceRows reads the llms rows from an existing README, defaults to "-"', () => {
+  const readme = [
+    '| 파일 | 출처 | Last updated | 가져온 날짜 |',
+    '| --- | --- | --- | --- |',
+    '| `llms.txt` | https://www.tiingo.com/llms.txt | 2026-08-18 | 2026-09-04 |',
+    '| `llms-full.txt` | https://www.tiingo.com/llms-full.txt | 2026-08-14 | 2026-09-04 |',
+  ].join('\n');
+  assert.deepStrictEqual(parseSourceRows(readme), {
+    'llms.txt': { updated: '2026-08-18', fetched: '2026-09-04' },
+    'llms-full.txt': { updated: '2026-08-14', fetched: '2026-09-04' },
+  });
+  assert.deepStrictEqual(parseSourceRows(''), {
+    'llms.txt': { updated: '-', fetched: '-' },
+    'llms-full.txt': { updated: '-', fetched: '-' },
+  });
+});
+
+test('renderIndex lists groups and pages in nav order with source rows', () => {
+  const nav = [
+    { group: '1. General', dir: 'general', pages: [{ title: '1.1 Overview', slug: 'overview', href: '/documentation/general/overview' }] },
+    { group: '2. REST', dir: 'rest', pages: [{ title: '2.1 End-of-Day', slug: 'end-of-day', href: '/documentation/end-of-day' }, { title: '2.10 Dividends', slug: 'dividends', href: '/documentation/corporate-actions/dividends' }] },
+  ];
+  const md = renderIndex(nav, { 'llms.txt': { updated: '2026-08-18', fetched: '2026-09-04' }, 'llms-full.txt': { updated: '-', fetched: '-' } });
+  assert.match(md, /^# Tiingo API 문서 카탈로그/);
+  assert.match(md, /총 3개 페이지/);
+  assert.match(md, /\| `llms\.txt` \| https:\/\/www\.tiingo\.com\/llms\.txt \| 2026-08-18 \| 2026-09-04 \|/);
+  assert.match(md, /\| `llms-full\.txt` \| https:\/\/www\.tiingo\.com\/llms-full\.txt \| - \| - \|/);
+  assert.match(md, /### 1\. General\n\n- \[1\.1 Overview\]\(general\/overview\.md\)/);
+  assert.match(md, /### 2\. REST\n\n- \[2\.1 End-of-Day\]\(rest\/end-of-day\.md\)\n- \[2\.10 Dividends\]\(rest\/dividends\.md\)/);
 });
