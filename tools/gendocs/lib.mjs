@@ -140,7 +140,7 @@ const SOURCE_URL = (name) => `https://www.tiingo.com/${name}`;
 export function parseSourceRows(readme) {
   const rows = {};
   for (const name of SOURCE_FILES) {
-    const re = new RegExp(`^\\| \`${name.replace('.', '\\.')}\` \\| [^|]* \\| ([^|]*) \\| ([^|]*) \\|`, 'm');
+    const re = new RegExp(`^\\| \`${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\` \\| [^|]* \\| ([^|]*) \\| ([^|]*) \\|`, 'm');
     const m = String(readme || '').match(re);
     rows[name] = m ? { updated: m[1].trim(), fetched: m[2].trim() } : { updated: '-', fetched: '-' };
   }
@@ -154,7 +154,7 @@ export function renderIndex(nav, sourceRows) {
     '# Tiingo API 문서 카탈로그',
     '',
     `Tiingo 문서 사이트(https://www.tiingo.com/documentation) 를 자동 변환한 md 총 ${total}개 페이지(tools/gendocs)와`,
-    'Tiingo 가 공식 제공하는 llms 원본 2개를 보관합니다. `tiingo-go` SDK 개발의 1차 참조입니다.',
+    `Tiingo 가 공식 제공하는 llms 원본 ${SOURCE_FILES.length}개를 보관합니다. \`tiingo-go\` SDK 개발의 1차 참조입니다.`,
     '',
     '- 페이지 md: 웹 문서를 페이지 단위로 변환. 엔드포인트별 Request/Response 필드 표(타입·설명)와 Python 예시 + 응답 예시 JSON 포함.',
     '- llms 원본: Tiingo 가 유지하는 개념·정책·플랜 제한·심볼 규칙의 source of truth. 일부 응답 필드는 타입 없이 이름만 나열돼 있어 페이지 md 로 보완.',

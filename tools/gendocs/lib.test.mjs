@@ -226,3 +226,10 @@ test('renderIndex lists groups and pages in nav order with source rows', () => {
   assert.match(md, /### 1\. General\n\n- \[1\.1 Overview\]\(general\/overview\.md\)/);
   assert.match(md, /### 2\. REST\n\n- \[2\.1 End-of-Day\]\(rest\/end-of-day\.md\)\n- \[2\.10 Dividends\]\(rest\/dividends\.md\)/);
 });
+
+test('renderIndex → parseSourceRows round-trips the source rows', () => {
+  const nav = [{ group: '1. General', dir: 'general', pages: [{ title: '1.1 Overview', slug: 'overview', href: '/documentation/general/overview' }] }];
+  const rows = { 'llms.txt': { updated: '2026-08-18', fetched: '2026-09-04' }, 'llms-full.txt': { updated: '2026-08-14', fetched: '2026-09-05' } };
+  assert.deepStrictEqual(parseSourceRows(renderIndex(nav, rows)), rows);
+  assert.match(renderIndex(nav, rows), /llms 원본 2개/);
+});
