@@ -260,11 +260,67 @@ git commit -m "feat(gendocs): nav/슬러그/토큰 치환/표 렌더 헬퍼"
 
 ---
 
-### Task 3: `lib.mjs` — 블록 → md 렌더 (`renderBlocks`, `renderPage`)
+### Task 3: `lib.mjs` — 블록 → md 렌더 (`renderBlocks`, `renderPage`) + Task 2 리뷰 반영
 
 **Files:**
-- Modify: `tools/gendocs/lib.mjs` (끝에 추가)
+- Modify: `tools/gendocs/lib.mjs` (Task 2 함수 3개 수정 + 끝에 추가)
 - Modify: `tools/gendocs/lib.test.mjs` (끝에 추가)
+
+**Task 2 코드 리뷰 반영 사항** (리뷰어 지적: `redactToken` 이 `?token=` 쿼리 형태만 잡음 — 스펙의 "무조건 치환" 보다 좁다):
+- `redactToken` 을 대소문자 무시로 바꾸고, 헤더 형태(`Authorization: Token <hex>`)와 WebSocket JSON 형태(`"authorization": "<token>"`, `"token": "<token>"`)도 치환. 캡처 그룹으로 원문의 `token=`/`Token ` 표기는 보존.
+- `renderPage` 최종 문자열에 `redactToken` 을 한 번 더 적용(문단 안의 토큰도 잡히도록).
+- `escapeCell` 의 죽은 하위 패턴 `(\n\s*)*` 제거(`/\s*\n\s*/g` 와 동일 동작).
+- `slugFromHref` 가 `?query`/`#hash` 를 떼어내도록(파일 경로 안전).
+
+- [ ] **Step 0: Task 2 함수 수정 — 실패하는 테스트 먼저**
+
+`tools/gendocs/lib.test.mjs` 의 `slugFromHref` 테스트와 `redactToken` 테스트에 아래 assertion 을 추가한다.
+
+```js
+// slugFromHref 테스트 안에 추가
+  assert.strictEqual(slugFromHref('/documentation/end-of-day?x=1#top'), 'end-of-day');
+
+// redactToken 테스트 안에 추가
+  assert.strictEqual(redactToken('Token=ABCDEF0123456789ABCDEF0123456789ABCDEF01'), 'Token=<TOKEN>');
+  assert.strictEqual(redactToken('Authorization: Token 0123456789abcdef0123456789abcdef01234567'), 'Authorization: Token <TOKEN>');
+  assert.strictEqual(redactToken('{"eventName":"subscribe","authorization":"0123456789abcdef0123456789abcdef01234567"}'), '{"eventName":"subscribe","authorization":"<TOKEN>"}');
+  assert.strictEqual(redactToken('{ "token": "0123456789abcdef0123456789abcdef01234567" }'), '{ "token": "<TOKEN>" }');
+  assert.strictEqual(redactToken('token=<TOKEN>'), 'token=<TOKEN>');
+```
+
+Run: `cd tools/gendocs && npm test` → Expected: FAIL (slugFromHref 1개, redactToken 여러 개 assertion 실패)
+
+`tools/gendocs/lib.mjs` 의 세 함수를 아래로 교체한다.
+
+```js
+// slugFromHref: '/documentation/corporate-actions/dividends' → 'dividends' (?query/#hash 제거)
+export function slugFromHref(href) {
+  return String(href).split(/[?#]/)[0].replace(/\/+$/, '').split('/').pop();
+}
+
+// redactToken: 예시 코드의 토큰 값을 <TOKEN> 으로. 비로그인 안내 문장(공백 포함), 쿼리 `token=`,
+// 헤더 `Authorization: Token <hex>`, JSON `"token"|"authorization": "<...>"` 형태를 대소문자 무시로
+// 치환한다(원문 표기는 캡처로 보존). 실제 Tiingo 토큰은 40자 hex 이므로 영숫자 20자 이상을 값으로 본다.
+export function redactToken(text) {
+  return String(text)
+    .replace(/(token=)Not logged-in[^"'\n&]*/gi, '$1<TOKEN>')
+    .replace(/(token=)[A-Za-z0-9]{20,}/gi, '$1<TOKEN>')
+    .replace(/(Token\s+)[A-Za-z0-9]{20,}/g, '$1<TOKEN>')
+    .replace(/("(?:token|authorization)"\s*:\s*")[A-Za-z0-9]{20,}(")/gi, '$1<TOKEN>$2');
+}
+
+// escapeCell: md 표 셀용 — 앞뒤 공백 제거, '|' 이스케이프, 줄바꿈(연속 포함) → <br>
+export function escapeCell(text) {
+  return String(text).trim().replace(/\|/g, '\\|').replace(/\s*\n\s*/g, '<br>');
+}
+```
+
+Run: `cd tools/gendocs && npm test` → Expected: `# pass 7`, `# fail 0`
+
+```bash
+git add tools/gendocs/lib.mjs tools/gendocs/lib.test.mjs
+git commit -m "fix(gendocs): redactToken 헤더/JSON/대소문자 형태 확장, slug 쿼리 제거 (Task 2 리뷰 반영)"
+```
 
 - [ ] **Step 1: 실패하는 테스트 추가**
 
@@ -366,6 +422,16 @@ test('renderPage without leading code blocks renders leading paragraphs without 
   assert.doesNotMatch(md, /## Endpoints/);
   assert.match(md, /^# T\n\n> 출처: u · 생성: d \(tools\/gendocs\)\n\nLead\.\n\n## H\n$/);
 });
+
+test('renderPage redacts tokens that appear outside code blocks', () => {
+  const md = renderPage({ title: 'T', sourceUrl: 'u', generatedAt: 'd', blocks: [
+    { type: 'para', md: 'Use ?token=0123456789abcdef0123456789abcdef01234567 in the URL.' },
+    { type: 'table', header: ['a'], rows: [['Authorization: Token 0123456789abcdef0123456789abcdef01234567']] },
+  ] });
+  assert.doesNotMatch(md, /0123456789abcdef/);
+  assert.match(md, /\?token=<TOKEN> in the URL/);
+  assert.match(md, /Authorization: Token <TOKEN>/);
+});
 ```
 
 - [ ] **Step 2: 테스트 실패 확인**
@@ -447,14 +513,15 @@ export function renderPage({ title, sourceUrl, generatedAt, blocks }) {
     parts.push(renderBlocks(lead));
   }
   if (rest.length) parts.push(renderBlocks(rest));
-  return parts.join('\n').replace(/\n{3,}/g, '\n\n').trimEnd() + '\n';
+  // 최종 문자열에 한 번 더 치환 — 코드블록 밖(문단·표)에 토큰이 렌더된 경우도 잡는다.
+  return redactToken(parts.join('\n').replace(/\n{3,}/g, '\n\n').trimEnd() + '\n');
 }
 ```
 
 - [ ] **Step 4: 테스트 통과 확인**
 
 Run: `cd tools/gendocs && npm test`
-Expected: `# pass 14`, `# fail 0`
+Expected: `# pass 15`, `# fail 0`
 
 - [ ] **Step 5: 커밋**
 
@@ -573,7 +640,7 @@ export function renderIndex(nav, sourceRows) {
 - [ ] **Step 4: 테스트 통과 확인**
 
 Run: `cd tools/gendocs && npm test`
-Expected: `# pass 16`, `# fail 0`
+Expected: `# pass 17`, `# fail 0`
 
 - [ ] **Step 5: 커밋**
 
@@ -874,7 +941,7 @@ Expected:
 - [ ] **Step 5: 단위 테스트 재실행 + 커밋**
 
 Run: `cd tools/gendocs && npm test`
-Expected: `# pass 16`, `# fail 0`
+Expected: `# pass 17`, `# fail 0`
 
 ```bash
 cd /Users/user/src/workspace_moneyflow/tiingo-go
@@ -1089,7 +1156,7 @@ git commit -m "docs: Tiingo 공식 llms.txt/llms-full.txt 보관 + fetch-docs.sh
 
 ```bash
 cd /Users/user/src/workspace_moneyflow/tiingo-go
-(cd tools/gendocs && npm test)                                    # pass 16, fail 0
+(cd tools/gendocs && npm test)                                    # pass 17, fail 0
 find docs/api -name '*.md' -not -name README.md | wc -l          # 24
 test ! -s tools/gendocs/failures.log && echo "no failures"
 grep -rE "Not logged-in|token=[A-Za-z0-9]{20,}" docs/api || echo "no token leak"
@@ -1112,7 +1179,7 @@ gh pr create --title "docs: Tiingo API 문서 카탈로그 (웹 24페이지 md +
 - Go 코드 없음(`go.mod` 는 SDK 스펙에서)
 
 ## Test plan
-- [x] `cd tools/gendocs && npm test` — 16 pass
+- [x] `cd tools/gendocs && npm test` — 17 pass
 - [x] `npm run gen` — 24 ok / 0 failed, `docs/api/README.md` 링크 24개 = 파일 24개
 - [x] `grep` 으로 토큰·로그인 문구 유출 없음
 - [x] `./scripts/fetch-docs.sh` 2회 실행 — 2회째 "변경 없음", README 원본 표 보존
