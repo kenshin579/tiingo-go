@@ -3,7 +3,7 @@
 - 작성일: 2026-09-04
 - 상태: 확정 (브레인스토밍 완료)
 - 레포: `github.com/kenshin579/tiingo-go` (워크스페이스 `tiingo-go/`, branch `chore/api-docs`)
-- 토픽: Tiingo API 문서를 SDK 개발의 1차 참조로 레포에 보관 — 공식 llms 원본 보관 + 웹 문서 24페이지 md 변환
+- 토픽: Tiingo API 문서를 SDK 개발의 1차 참조로 레포에 보관 — 공식 llms 원본 보관 + 웹 문서 23페이지 md 변환
 
 ## 배경 / 목적
 
@@ -31,7 +31,7 @@ fmp-go 는 Playwright 크롤러로 274 페이지를 md 로 변환했고, toss-go
   (`src_app_api_documentation_documentation_module_ts.*.js`, 직접 다운로드는 403)로 렌더된다. **반드시 headless
   브라우저로 렌더링**해야 읽을 수 있다. `sitemap.xml` 은 없다(404).
 - 사이드바(`mat-sidenav` 안 `a.side-bar-link-container[href]`)가 문서 페이지를 전부 열거한다. 그룹 링크는
-  `indent-level` 없음(`1. General` 등), leaf 페이지는 `.indent-level-1`. leaf 24개:
+  `indent-level` 없음(`1. General` 등), leaf 페이지는 `.indent-level-1`. leaf 23개(3+11+5+1+3):
 
 | 그룹 | URL (`/documentation/` 이하) |
 |---|---|
@@ -73,16 +73,16 @@ fmp-go 는 Playwright 크롤러로 274 페이지를 md 로 변환했고, toss-go
 
 ## 결정 사항 (브레인스토밍)
 
-1. **하이브리드**: llms 원본 2개를 그대로 보관 + 웹 문서 24페이지를 크롤러로 md 변환. (검토했던 대안: llms-full 만
+1. **하이브리드**: llms 원본 2개를 그대로 보관 + 웹 문서 23페이지를 크롤러로 md 변환. (검토했던 대안: llms-full 만
    보관 → 필드 타입 누락으로 기각. 웹 크롤링만 → Tiingo 가 유지하는 정책·개념 원본을 버릴 이유가 없어 기각.)
-2. **md 단위 = 웹 페이지 1개 = md 1개 (24 파일)**. (대안: 엔드포인트별 1파일(fmp-go 식, 약 50개) → Tiingo 는 한
+2. **md 단위 = 웹 페이지 1개 = md 1개 (23 파일)**. (대안: 엔드포인트별 1파일(fmp-go 식, 약 50개) → Tiingo 는 한
    페이지에 엔드포인트 2~5개와 개요·FAQ 가 묶여 있어 쪼개면 문맥이 끊김. 파일 안에서 `##` 섹션으로 나누면 참조
    정확도는 충분.)
 3. **크롤러 = Node + Playwright, `tools/gendocs/`** (fmp-go 와 동일 구조). (대안: Go + chromedp → 문서 생성 전용
    의존성이 라이브러리 go.mod 에 섞이거나 별도 모듈 필요. 1회성 DevTools 추출 → 갱신 절차 없음. 둘 다 기각.)
-4. **크롤링 범위 = 24페이지 전부** (changelog / integrations / developers 포함). 제외 규칙이 코드를 늘리고, changelog 는
+4. **크롤링 범위 = 23페이지 전부** (changelog / integrations / developers 포함). 제외 규칙이 코드를 늘리고, changelog 는
    필드 추가·폐기 이력이라 SDK 유지보수에 유용.
-5. **페이지 열거는 사이드바를 읽는다** (하드코딩 목록 없음). Tiingo 가 페이지를 추가하면 자동 반영. 24개가 아니면
+5. **페이지 열거는 사이드바를 읽는다** (하드코딩 목록 없음). Tiingo 가 페이지를 추가하면 자동 반영. 23개가 아니면
    경고만 하고 진행.
 6. **llms-full.txt 를 섹션별 md 로 분할하지 않는다.** 웹 크롤링 md 가 그 역할을 하므로 원본 그대로만 둔다.
 7. `go.mod` 는 이번에 만들지 않는다. SDK 스펙에서 생성.
@@ -116,7 +116,7 @@ tiingo-go/
 ```
 
 - 디렉터리 = 사이드바 그룹명 소문자(`general`, `rest`, `websockets`, `utilities`, `appendix`).
-- 파일명 = URL **마지막 세그먼트**. `corporate-actions/dividends` → `rest/dividends.md`. 24개 안에서 충돌 없음(확인).
+- 파일명 = URL **마지막 세그먼트**. `corporate-actions/dividends` → `rest/dividends.md`. 23개 안에서 충돌 없음(확인).
 
 ## 크롤러 설계 (`tools/gendocs/`)
 
@@ -124,7 +124,7 @@ tiingo-go/
 
 1. **열거**: `https://www.tiingo.com/documentation/general/overview` 를 열고 사이드바에서
    `a.side-bar-link-container[href]` 를 문서 순서로 읽는다. `.indent-level-1` 이 없는 링크는 그룹(제목 `1. General`
-   → 디렉터리 `general`), 있는 링크는 직전 그룹에 속하는 leaf 페이지. 기대 24개, 다르면 콘솔 경고.
+   → 디렉터리 `general`), 있는 링크는 직전 그룹에 속하는 leaf 페이지. 기대 23개, 다르면 콘솔 경고.
 2. **페이지 추출** (`extractPage(page)` — 브라우저 컨텍스트에서 실행, 셀렉터는 이 함수에만 존재):
    `page.goto(url, {waitUntil:'networkidle'})` + 1초 대기 후 `tiingo-api-canvas` 안을 문서 순서로 걸어
    블록 배열을 만든다.
@@ -219,7 +219,7 @@ print(requestResponse.json())
 
 ### `docs/api/README.md` (생성)
 
-1. 제목 + 한 줄 설명(웹 문서 24페이지 자동 변환 + Tiingo 공식 llms 원본 보관).
+1. 제목 + 한 줄 설명(웹 문서 23페이지 자동 변환 + Tiingo 공식 llms 원본 보관).
 2. 원본 표: 파일 / 출처 URL / `Last updated`(llms.txt 의 값) / 가져온 날짜 — `fetch-docs.sh` 가 갱신.
 3. 재생성 방법 두 줄(`npm run gen`, `scripts/fetch-docs.sh`).
 4. 그룹별 페이지 목록: `## 1. General` 아래 `- [1.1 Overview](general/overview.md)` 형식.
@@ -238,17 +238,17 @@ print(requestResponse.json())
 
 - 페이지 구조가 예상과 다르면(캔버스 없음, 탭 라벨 없음) 있는 블록만으로 md 를 만들고 콘솔에 경고. 완전 실패는
   `failures.log` 에 기록 후 계속 — 전체 작업을 중단시키지 않는다.
-- 사이드바 leaf 가 24개가 아니면 경고만 하고 발견된 만큼 처리.
+- 사이드바 leaf 가 23개가 아니면 경고만 하고 발견된 만큼 처리.
 - 재실행으로 보강 가능. 성공/실패 카운트를 콘솔에 요약.
 
 ## 검증
 
-- `find docs/api -name '*.md' -not -name README.md | wc -l` = 24, `failures.log` 비어 있음.
+- `find docs/api -name '*.md' -not -name README.md | wc -l` = 23, `failures.log` 비어 있음.
 - `cd tools/gendocs && npm test` 통과. `lib.test.mjs` 는 fixture 블록 배열로 다음을 검증: 표 렌더(셀 줄바꿈 `<br>`,
   `|` 이스케이프), 탭 재정렬(Request→Response→Example), `token=` 치환, 빈 탭 생략, 헤딩 레벨 매핑.
 - 육안 검수 3개: `rest/end-of-day.md`(표·예시 JSON), `websockets/iex.md`(h3 중첩 + 표 없는 탭),
   `general/overview.md`(탭 없는 산문 페이지).
-- `docs/api/README.md` 의 상대 링크 24개가 모두 실제 파일을 가리키는지 스크립트로 확인.
+- `docs/api/README.md` 의 상대 링크 23개가 모두 실제 파일을 가리키는지 스크립트로 확인.
 - 크롤러 재실행 후 `git diff --stat` 이 생성 날짜 줄 외에 비어 있는지 확인(멱등).
 - 생성된 md 어디에도 `Not logged-in` 문자열과 실제 토큰 패턴이 없는지 `grep`.
 
@@ -266,4 +266,4 @@ print(requestResponse.json())
 - 로그인 상태로 크롤링하면 예시 코드에 실제 API 토큰이 렌더된다. 비로그인 컨텍스트 + `<TOKEN>` 치환으로 이중 방어하고,
   검증 단계에서 `grep` 으로 확인한다.
 - Playwright chromium 설치 필요(`npx playwright install chromium`). 이 맥에는 2026-09-04 기준 설치돼 있지 않다.
-- 24페이지 렌더링은 1~2분. 500ms 대기로 사이트에 부하를 주지 않는다.
+- 23페이지 렌더링은 1~2분. 500ms 대기로 사이트에 부하를 주지 않는다.

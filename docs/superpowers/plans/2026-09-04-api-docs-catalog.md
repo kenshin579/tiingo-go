@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Tiingo 문서 사이트 24페이지를 Playwright 크롤러로 md 변환해 `docs/api/`에 두고, Tiingo 공식 `llms.txt`/`llms-full.txt` 원본을 함께 보관한다.
+**Goal:** Tiingo 문서 사이트 23페이지를 Playwright 크롤러로 md 변환해 `docs/api/`에 두고, Tiingo 공식 `llms.txt`/`llms-full.txt` 원본을 함께 보관한다.
 
 **Architecture:** `tools/gendocs/`(Node + Playwright)가 사이드바로 페이지를 열거하고, 각 페이지의 DOM을 브라우저 안에서 구조화된 블록 JSON으로 추출한 뒤(`gendocs.mjs`, I/O), 순수 함수(`lib.mjs`)가 블록을 md로 렌더한다. `scripts/fetch-docs.sh`(bash + curl)가 llms 원본 2개를 내려받고 `docs/api/README.md`의 원본 표를 갱신한다. 스펙: `docs/superpowers/specs/2026-09-04-api-docs-catalog-design.md`.
 
@@ -22,7 +22,7 @@
 | `tools/gendocs/gendocs.mjs` | Playwright 실행, 열거, `extractPage`(브라우저 셀렉터는 여기에만), 파일 쓰기, 재시도, 인덱스 |
 | `scripts/fetch-docs.sh` | llms 원본 2개 다운로드 + README 원본 표 갱신 |
 | `docs/api/README.md` | 생성 인덱스 (gendocs가 쓰고, fetch-docs.sh가 원본 표 두 행만 갱신) |
-| `docs/api/{general,rest,websockets,utilities,appendix}/*.md` | 생성된 24개 페이지 |
+| `docs/api/{general,rest,websockets,utilities,appendix}/*.md` | 생성된 23개 페이지 |
 | `docs/api/llms.txt`, `docs/api/llms-full.txt` | Tiingo 공식 원본 |
 
 ### 블록 JSON 계약 (`extractPage` 출력 = `lib.mjs` 입력)
@@ -676,7 +676,7 @@ git commit -m "test(gendocs): 인덱스 원본 표 라운드트립 테스트, �
 
 ```js
 // Tiingo API docs 카탈로그 생성기.
-// 사용: node gendocs.mjs                 (전체 24페이지)
+// 사용: node gendocs.mjs                 (전체 23페이지)
 //       ENUM_ONLY=1 node gendocs.mjs     (사이드바 열거 결과만 출력)
 //       LIMIT=3 node gendocs.mjs         (앞 3페이지만 — 검증용)
 //       ONLY=end-of-day node gendocs.mjs (slug 하나만)
@@ -694,7 +694,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const OUT_ROOT = path.resolve(HERE, '../../docs/api'); // tools/gendocs → repo/docs/api
 const FAILURES = path.join(HERE, 'failures.log');
 const DELAY_MS = 500;
-const EXPECTED_PAGES = 24;
+const EXPECTED_PAGES = 23;
 
 // enumerate: 사이드바(mat-sidenav)의 링크를 문서 순서로 읽어 nav 구조를 만든다.
 async function enumerate(page) {
@@ -740,7 +740,7 @@ Run: `cd tools/gendocs && ENUM_ONLY=1 npm run gen`
 Expected 출력(순서 그대로):
 
 ```
-enumerated 24 pages in 5 groups
+enumerated 23 pages in 5 groups
 1. General → general/
   1.1 Overview  /documentation/general/overview  → overview.md
   1.2 Connecting  /documentation/general/connecting  → connecting.md
@@ -756,7 +756,7 @@ enumerated 24 pages in 5 groups
   ... (developers, integrations, symbology)
 ```
 
-24개가 아니거나 그룹 제목이 다르면(예: `3. Websockets` 가 `3. WebSockets`), `groupDir` 는 소문자화하므로 디렉터리는 영향 없다. leaf 판정(`indent-level-1`)이 어긋나 0개면 사이드바 셀렉터를 브라우저 DevTools 로 다시 확인한다(2026-09-04 확인값: `a.side-bar-link-container`, 그룹 링크는 indent 클래스 없음).
+23개가 아니거나 그룹 제목이 다르면(예: `3. Websockets` 가 `3. WebSockets`), `groupDir` 는 소문자화하므로 디렉터리는 영향 없다. leaf 판정(`indent-level-1`)이 어긋나 0개면 사이드바 셀렉터를 브라우저 DevTools 로 다시 확인한다(2026-09-04 확인값: `a.side-bar-link-container`, 그룹 링크는 indent 클래스 없음).
 
 - [ ] **Step 3: 커밋**
 
@@ -764,6 +764,8 @@ enumerated 24 pages in 5 groups
 git add tools/gendocs/gendocs.mjs
 git commit -m "feat(gendocs): 사이드바 열거 + ENUM_ONLY 스모크"
 ```
+
+**구현 시 확인된 이탈(승인)**: 실제 leaf 는 23개(스펙의 24 는 합계 오기) → `EXPECTED_PAGES = 23`. 사이드바 하단 전역 링크(`Home`, `Documentation`(`/documentation`), `Products` …)는 `side-bar-link-container permanent` 클래스라 `Documentation → documentation/` 빈 그룹이 생김 → 셀렉터를 `mat-sidenav a.side-bar-link-container:not(.permanent)` 로.
 
 ---
 
@@ -969,22 +971,22 @@ git commit -m "feat(gendocs): 페이지 추출(탭·표·예시) + 렌더·쓰�
 
 ---
 
-### Task 7: 전체 24페이지 생성 + 검증 + 커밋
+### Task 7: 전체 23페이지 생성 + 검증 + 커밋
 
 **Files:**
-- Create: `docs/api/README.md`, `docs/api/{general,rest,websockets,utilities,appendix}/*.md` (24개)
+- Create: `docs/api/README.md`, `docs/api/{general,rest,websockets,utilities,appendix}/*.md` (23개)
 
 - [ ] **Step 1: 전체 실행**
 
 Run: `cd tools/gendocs && npm run gen`
-Expected: `enumerated 24 pages in 5 groups` … `done: 24 ok, 0 failed (failures.log); index 24 pages`. 1~2분 소요.
+Expected: `enumerated 23 pages in 5 groups` … `done: 23 ok, 0 failed (failures.log); index 23 pages`. 1~2분 소요.
 실패가 있으면 `RETRY=1 npm run gen` 으로 재시도.
 
 - [ ] **Step 2: 개수·실패·토큰 검증**
 
 ```bash
 cd /Users/user/src/workspace_moneyflow/tiingo-go
-find docs/api -name '*.md' -not -name README.md | wc -l          # 24
+find docs/api -name '*.md' -not -name README.md | wc -l          # 23
 wc -c tools/gendocs/failures.log                                  # 0
 grep -rl "Not logged-in" docs/api || echo "no leaked login text"  # no leaked login text
 grep -rE "token=[A-Za-z0-9]{20,}" docs/api || echo "no token"     # no token
@@ -998,7 +1000,7 @@ grep -oE '\]\([a-z]+/[a-z0-9-]+\.md\)' docs/api/README.md | tr -d '()]' | sort >
 find docs/api -name '*.md' -not -name README.md | sed 's#^docs/api/##' | sort > /tmp/files.txt
 diff /tmp/links.txt /tmp/files.txt && echo "index OK"
 ```
-Expected: `index OK` (링크 24개 = 파일 24개, 차이 없음). `/tmp` 대신 스크래치 디렉터리를 써도 된다.
+Expected: `index OK` (링크 23개 = 파일 23개, 차이 없음). `/tmp` 대신 스크래치 디렉터리를 써도 된다.
 
 - [ ] **Step 4: 육안 검수 3개**
 
@@ -1017,7 +1019,7 @@ Expected: 재생성된 2개 파일은 `생성:` 날짜가 같은 날이면 diff 
 
 ```bash
 git add docs/api
-git commit -m "docs: Tiingo 문서 24페이지 md 카탈로그 생성 (tools/gendocs)"
+git commit -m "docs: Tiingo 문서 23페이지 md 카탈로그 생성 (tools/gendocs)"
 ```
 
 ---
@@ -1163,7 +1165,7 @@ git commit -m "docs: Tiingo 공식 llms.txt/llms-full.txt 보관 + fetch-docs.sh
 
 ## 문서
 
-- [`docs/api/README.md`](docs/api/README.md) — Tiingo 문서 사이트 24페이지를 변환한 md + Tiingo 공식 `llms.txt`/`llms-full.txt` 원본.
+- [`docs/api/README.md`](docs/api/README.md) — Tiingo 문서 사이트 23페이지를 변환한 md + Tiingo 공식 `llms.txt`/`llms-full.txt` 원본.
 - 재생성: `./scripts/fetch-docs.sh`(llms 원본), `cd tools/gendocs && npm install && npx playwright install chromium && npm run gen`(페이지 md).
 - 설계: [`docs/superpowers/specs/`](docs/superpowers/specs/)
 ```
@@ -1173,7 +1175,7 @@ git commit -m "docs: Tiingo 공식 llms.txt/llms-full.txt 보관 + fetch-docs.sh
 ```bash
 cd /Users/user/src/workspace_moneyflow/tiingo-go
 (cd tools/gendocs && npm test)                                    # pass 20, fail 0
-find docs/api -name '*.md' -not -name README.md | wc -l          # 24
+find docs/api -name '*.md' -not -name README.md | wc -l          # 23
 test ! -s tools/gendocs/failures.log && echo "no failures"
 grep -rE "Not logged-in|token=[A-Za-z0-9]{20,}" docs/api || echo "no token leak"
 git status --short                                                # README.md 만 변경
@@ -1186,9 +1188,9 @@ file -I README.md docs/api/README.md docs/api/rest/end-of-day.md  # 모두 chars
 git add README.md
 git commit -m "docs: README — 문서 카탈로그 안내"
 git push -u origin chore/api-docs
-gh pr create --title "docs: Tiingo API 문서 카탈로그 (웹 24페이지 md + 공식 llms 원본)" --body "$(cat <<'EOF'
+gh pr create --title "docs: Tiingo API 문서 카탈로그 (웹 23페이지 md + 공식 llms 원본)" --body "$(cat <<'EOF'
 ## Summary
-- Tiingo 문서 사이트(Angular SPA) 24페이지를 Playwright 크롤러(`tools/gendocs`)로 페이지 단위 md 변환 → `docs/api/{general,rest,websockets,utilities,appendix}/`
+- Tiingo 문서 사이트(Angular SPA) 23페이지를 Playwright 크롤러(`tools/gendocs`)로 페이지 단위 md 변환 → `docs/api/{general,rest,websockets,utilities,appendix}/`
 - 엔드포인트별 Request/Response 필드 표(타입·설명) + Python 예시 + 응답 예시 JSON, `token=` 은 `<TOKEN>` 치환
 - Tiingo 공식 `llms.txt` / `llms-full.txt` 원본 보관 + `scripts/fetch-docs.sh`
 - 설계: `docs/superpowers/specs/2026-09-04-api-docs-catalog-design.md`, 계획: `docs/superpowers/plans/2026-09-04-api-docs-catalog.md`
@@ -1196,7 +1198,7 @@ gh pr create --title "docs: Tiingo API 문서 카탈로그 (웹 24페이지 md +
 
 ## Test plan
 - [x] `cd tools/gendocs && npm test` — 20 pass
-- [x] `npm run gen` — 24 ok / 0 failed, `docs/api/README.md` 링크 24개 = 파일 24개
+- [x] `npm run gen` — 23 ok / 0 failed, `docs/api/README.md` 링크 23개 = 파일 23개
 - [x] `grep` 으로 토큰·로그인 문구 유출 없음
 - [x] `./scripts/fetch-docs.sh` 2회 실행 — 2회째 "변경 없음", README 원본 표 보존
 - [x] 육안: `rest/end-of-day.md`, `rest/fundamentals.md`(meta 16필드 타입), `websockets/iex.md`(h3 + #### 탭), `general/overview.md`
@@ -1214,14 +1216,14 @@ EOF
 
 | 스펙 항목 | 태스크 |
 |---|---|
-| 사이드바 열거, 24개 아니면 경고 | Task 5 |
+| 사이드바 열거, 23개 아니면 경고 | Task 5 |
 | `extractPage` 셀렉터 한 곳, h1-h3/p/list/pre/tabs/table/Examples(Python만, json) | Task 6 |
 | 비로그인 컨텍스트 + `token=` 치환 이중 방어 | Task 5(newContext), Task 2(redactToken), Task 3(renderBlocks) |
 | 렌더: 제목, 출처 줄, `##`/`###` 매핑, 탭 Request→Response→Example, 빈 탭 생략, 표 `<br>`/`\|`, 코드 언어 | Task 3 |
 | `docs/api/README.md` 인덱스 (원본 표, 재생성, 그룹별 목록) + 원본 표 보존 | Task 4, Task 6 |
 | 500ms 대기, 1회 재시도, failures.log, LIMIT/RETRY | Task 6 |
 | `fetch-docs.sh` (curl, 임시→이동, Last updated, README sed, 멱등) | Task 8 |
-| 검증(24개, failures 비움, 링크, 토큰 grep, 육안 3개, 멱등) | Task 7, Task 9 |
+| 검증(23개, failures 비움, 링크, 토큰 grep, 육안 3개, 멱등) | Task 7, Task 9 |
 | `.gitignore`, 루트 README, PR | Task 1, Task 9 |
 
 스펙과의 사소한 차이: 첫 헤딩 앞 엔드포인트 블록의 헤딩을 `## REST Endpoints` 가 아니라 `## Endpoints` 로 둔다(WebSocket 페이지에도 같은 규칙을 쓰기 위해).
