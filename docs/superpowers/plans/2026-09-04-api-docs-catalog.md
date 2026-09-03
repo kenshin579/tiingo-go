@@ -664,6 +664,14 @@ git commit -m "feat(gendocs): docs/api/README.md 인덱스 렌더 + 원본 표 �
 **Files:**
 - Create: `tools/gendocs/gendocs.mjs`
 
+- [ ] **Step 0: Task 4 코드 리뷰 반영** (사소: `parseSourceRows` 의 정규식 이스케이프가 첫 `.` 만 처리, README 문구 "llms 원본 2개" 하드코딩, JS↔bash 행 포맷 계약을 잠그는 라운드트립 테스트 부재)
+
+`lib.test.mjs` 끝에 `renderIndex → parseSourceRows` 라운드트립 테스트 1개 추가(`assert.deepStrictEqual(parseSourceRows(renderIndex(nav, rows)), rows)`), `lib.mjs` 의 `parseSourceRows` 이스케이프를 `name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')` 로, `renderIndex` 의 "2개" 를 `${SOURCE_FILES.length}개` 로. `npm test` → `# pass 20`.
+
+```bash
+git commit -m "test(gendocs): 인덱스 원본 표 라운드트립 테스트, 정규식 이스케이프 일반화 (Task 4 리뷰 반영)"
+```
+
 - [ ] **Step 1: `gendocs.mjs` 작성 (열거 부분까지)**
 
 ```js
@@ -949,7 +957,7 @@ Expected:
 - [ ] **Step 5: 단위 테스트 재실행 + 커밋**
 
 Run: `cd tools/gendocs && npm test`
-Expected: `# pass 19`, `# fail 0`
+Expected: `# pass 20`, `# fail 0`
 
 ```bash
 cd /Users/user/src/workspace_moneyflow/tiingo-go
@@ -1164,7 +1172,7 @@ git commit -m "docs: Tiingo 공식 llms.txt/llms-full.txt 보관 + fetch-docs.sh
 
 ```bash
 cd /Users/user/src/workspace_moneyflow/tiingo-go
-(cd tools/gendocs && npm test)                                    # pass 19, fail 0
+(cd tools/gendocs && npm test)                                    # pass 20, fail 0
 find docs/api -name '*.md' -not -name README.md | wc -l          # 24
 test ! -s tools/gendocs/failures.log && echo "no failures"
 grep -rE "Not logged-in|token=[A-Za-z0-9]{20,}" docs/api || echo "no token leak"
@@ -1187,7 +1195,7 @@ gh pr create --title "docs: Tiingo API 문서 카탈로그 (웹 24페이지 md +
 - Go 코드 없음(`go.mod` 는 SDK 스펙에서)
 
 ## Test plan
-- [x] `cd tools/gendocs && npm test` — 19 pass
+- [x] `cd tools/gendocs && npm test` — 20 pass
 - [x] `npm run gen` — 24 ok / 0 failed, `docs/api/README.md` 링크 24개 = 파일 24개
 - [x] `grep` 으로 토큰·로그인 문구 유출 없음
 - [x] `./scripts/fetch-docs.sh` 2회 실행 — 2회째 "변경 없음", README 원본 표 보존
