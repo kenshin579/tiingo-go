@@ -50,3 +50,78 @@ export function renderTable({ header, rows }) {
   const line = (cells) => `| ${cells.map(escapeCell).join(' | ')} |`;
   return [line(header), `| ${header.map(() => '---').join(' | ')} |`, ...rows.map(line)].join('\n');
 }
+
+// ---- 블록 → md ----
+
+const TAB_ORDER = { Request: 0, Response: 1, Example: 2 };
+
+// orderTabs: 웹의 Response→Request→Examples 를 Request→Response→Example 순으로. 'Examples' 는 'Example' 로 개명.
+export function orderTabs(tabs) {
+  const renamed = tabs.map((t) => ({ ...t, name: t.name === 'Examples' ? 'Example' : t.name }));
+  return renamed
+    .map((t, i) => ({ t, i, k: t.name in TAB_ORDER ? TAB_ORDER[t.name] : 100 + i }))
+    .sort((a, b) => a.k - b.k)
+    .map((x) => x.t);
+}
+
+// isBoilerplate: 모든 페이지에 반복되는 토큰 안내 문단
+function isBoilerplate(md) {
+  return /^Just remember, you will need your token/.test(md) || /^Click here to see your API Token/.test(md);
+}
+
+// renderBlocks: 블록 배열 → md. level 은 현재 섹션 헤딩 깊이(기본 2). h1/h2 → ##, h3 → ###.
+// 탭 헤딩은 현재 섹션보다 한 단계 아래(최대 ####).
+export function renderBlocks(blocks, level = 2) {
+  const out = [];
+  let cur = level;
+  for (const b of blocks) {
+    switch (b.type) {
+      case 'heading':
+        cur = b.level <= 2 ? 2 : 3;
+        out.push(`${'#'.repeat(cur)} ${b.text}`, '');
+        break;
+      case 'para':
+        if (b.md && !isBoilerplate(b.md)) out.push(b.md, '');
+        break;
+      case 'list':
+        if (b.items.length) out.push(...b.items.map((it, i) => `${b.ordered ? `${i + 1}.` : '-'} ${it}`), '');
+        break;
+      case 'code':
+        out.push('```' + (b.lang || ''), redactToken(b.text), '```', '');
+        break;
+      case 'table': {
+        const t = renderTable(b);
+        if (t) out.push(t, '');
+        break;
+      }
+      case 'tabs': {
+        const h = '#'.repeat(Math.min(cur + 1, 4));
+        for (const tab of orderTabs(b.tabs)) {
+          const inner = renderBlocks(tab.blocks, cur);
+          if (!inner.trim()) continue;
+          out.push(`${h} ${tab.name}`, '', inner);
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  }
+  return out.join('\n').replace(/\n{3,}/g, '\n\n');
+}
+
+// renderPage: 페이지 md. 첫 헤딩 앞의 블록(엔드포인트 URL 코드블록 등)은 '## Endpoints' 아래에 둔다
+// (코드블록이 하나도 없으면 헤딩 없이 그대로).
+export function renderPage({ title, sourceUrl, generatedAt, blocks }) {
+  const firstHeading = blocks.findIndex((b) => b.type === 'heading');
+  const lead = firstHeading === -1 ? blocks : blocks.slice(0, firstHeading);
+  const rest = firstHeading === -1 ? [] : blocks.slice(firstHeading);
+  const parts = [`# ${title}`, '', `> 출처: ${sourceUrl} · 생성: ${generatedAt} (tools/gendocs)`, ''];
+  if (lead.length) {
+    if (lead.some((b) => b.type === 'code')) parts.push('## Endpoints', '');
+    parts.push(renderBlocks(lead));
+  }
+  if (rest.length) parts.push(renderBlocks(rest));
+  // 최종 문자열에 한 번 더 치환 — 코드블록 밖(문단·표)에 토큰이 렌더된 경우도 잡는다.
+  return redactToken(parts.join('\n').replace(/\n{3,}/g, '\n\n').trimEnd() + '\n');
+}

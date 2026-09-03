@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { slugFromHref, groupDir, buildNav, redactToken, escapeCell, renderTable } from './lib.mjs';
+import { slugFromHref, groupDir, buildNav, redactToken, escapeCell, renderTable, orderTabs, renderBlocks, renderPage } from './lib.mjs';
 
 test('slugFromHref returns last path segment', () => {
   assert.strictEqual(slugFromHref('/documentation/corporate-actions/dividends'), 'dividends');
@@ -72,4 +72,106 @@ test('renderTable renders header, separator, rows; empty when no rows', () => {
   ].join('\n'));
   assert.strictEqual(renderTable({ header: [], rows: [] }), '');
   assert.strictEqual(renderTable({ header: ['a'], rows: [] }), '');
+});
+
+test('orderTabs puts Request, Response, Example first and renames Examples', () => {
+  const tabs = [{ name: 'Response', blocks: [] }, { name: 'Request', blocks: [] }, { name: 'Examples', blocks: [] }, { name: 'Other', blocks: [] }];
+  assert.deepStrictEqual(orderTabs(tabs).map((t) => t.name), ['Request', 'Response', 'Example', 'Other']);
+});
+
+test('renderBlocks maps headings (h1/h2→##, h3→###), lists, code langs', () => {
+  const md = renderBlocks([
+    { type: 'heading', level: 1, text: '3.4.1 Overview' },
+    { type: 'para', md: 'Intro **bold** [link](https://x).' },
+    { type: 'list', ordered: false, items: ['one', 'two'] },
+    { type: 'list', ordered: true, items: ['first'] },
+    { type: 'heading', level: 3, text: 'Reference Price Update Messages' },
+    { type: 'code', lang: '', text: '# Meta Data\nhttps://api.tiingo.com/tiingo/daily/<ticker>' },
+    { type: 'code', lang: 'json', text: '[{"a":1}]' },
+  ]);
+  assert.strictEqual(md, [
+    '## 3.4.1 Overview', '',
+    'Intro **bold** [link](https://x).', '',
+    '- one', '- two', '',
+    '1. first', '',
+    '### Reference Price Update Messages', '',
+    '```', '# Meta Data', 'https://api.tiingo.com/tiingo/daily/<ticker>', '```', '',
+    '```json', '[{"a":1}]', '```', '',
+  ].join('\n'));
+});
+
+test('renderBlocks renders tabs one level below the current heading, reordered, empty tabs omitted, token redacted', () => {
+  const md = renderBlocks([
+    { type: 'heading', level: 2, text: '2.1.2 End-of-Day Endpoint' },
+    { type: 'tabs', tabs: [
+      { name: 'Response', blocks: [{ type: 'table', header: ['Field Name', 'JSON Field'], rows: [['Date', 'date']] }] },
+      { name: 'Request', blocks: [{ type: 'para', md: 'params' }] },
+      { name: 'Examples', blocks: [
+        { type: 'code', lang: 'python', text: 'requests.get("https://api.tiingo.com/x?token=Not logged-in or registered. Please login or register to see your API Token")' },
+        { type: 'code', lang: 'json', text: '[]' },
+      ] },
+    ] },
+  ]);
+  const i = (s) => md.indexOf(s);
+  assert.ok(i('### Request') > -1 && i('### Response') > i('### Request') && i('### Example') > i('### Response'));
+  assert.match(md, /\| Field Name \| JSON Field \|/);
+  assert.match(md, /```python\nrequests\.get\("https:\/\/api\.tiingo\.com\/x\?token=<TOKEN>"\)\n```/);
+  assert.doesNotMatch(md, /Not logged-in/);
+});
+
+test('renderBlocks omits tabs whose blocks render to nothing', () => {
+  const md = renderBlocks([
+    { type: 'heading', level: 2, text: 'S' },
+    { type: 'tabs', tabs: [{ name: 'Response', blocks: [] }, { name: 'Request', blocks: [{ type: 'para', md: 'p' }] }] },
+  ]);
+  assert.doesNotMatch(md, /### Response/);
+  assert.match(md, /### Request\n\np/);
+});
+
+test('renderBlocks drops the "Just remember, you will need your token" boilerplate paragraph', () => {
+  const md = renderBlocks([
+    { type: 'para', md: 'Just remember, you will need your token in order to connect. Keep it safe.' },
+    { type: 'para', md: 'Click here to see your API Token.' },
+    { type: 'para', md: 'Real content.' },
+  ]);
+  assert.strictEqual(md, 'Real content.\n');
+});
+
+test('renderPage adds title, source line, and an Endpoints section for leading code blocks', () => {
+  const md = renderPage({
+    title: 'End-of-Day (EOD) Stock Price API Documentation',
+    sourceUrl: 'https://www.tiingo.com/documentation/end-of-day',
+    generatedAt: '2026-09-04',
+    blocks: [
+      { type: 'para', md: 'REST Endpoints' },
+      { type: 'code', lang: '', text: '# Meta Data\nhttps://api.tiingo.com/tiingo/daily/<ticker>' },
+      { type: 'heading', level: 2, text: '2.1.1 Overview' },
+      { type: 'para', md: 'Body.' },
+    ],
+  });
+  assert.strictEqual(md, [
+    '# End-of-Day (EOD) Stock Price API Documentation', '',
+    '> 출처: https://www.tiingo.com/documentation/end-of-day · 생성: 2026-09-04 (tools/gendocs)', '',
+    '## Endpoints', '',
+    'REST Endpoints', '',
+    '```', '# Meta Data', 'https://api.tiingo.com/tiingo/daily/<ticker>', '```', '',
+    '## 2.1.1 Overview', '',
+    'Body.', '',
+  ].join('\n'));
+});
+
+test('renderPage without leading code blocks renders leading paragraphs without an Endpoints section', () => {
+  const md = renderPage({ title: 'T', sourceUrl: 'u', generatedAt: 'd', blocks: [{ type: 'para', md: 'Lead.' }, { type: 'heading', level: 2, text: 'H' }] });
+  assert.doesNotMatch(md, /## Endpoints/);
+  assert.match(md, /^# T\n\n> 출처: u · 생성: d \(tools\/gendocs\)\n\nLead\.\n\n## H\n$/);
+});
+
+test('renderPage redacts tokens that appear outside code blocks', () => {
+  const md = renderPage({ title: 'T', sourceUrl: 'u', generatedAt: 'd', blocks: [
+    { type: 'para', md: 'Use ?token=0123456789abcdef0123456789abcdef01234567 in the URL.' },
+    { type: 'table', header: ['a'], rows: [['Authorization: Token 0123456789abcdef0123456789abcdef01234567']] },
+  ] });
+  assert.doesNotMatch(md, /0123456789abcdef/);
+  assert.match(md, /\?token=<TOKEN> in the URL/);
+  assert.match(md, /Authorization: Token <TOKEN>/);
 });
