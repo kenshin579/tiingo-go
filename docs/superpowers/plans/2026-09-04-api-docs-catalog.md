@@ -765,6 +765,8 @@ git add tools/gendocs/gendocs.mjs
 git commit -m "feat(gendocs): 사이드바 열거 + ENUM_ONLY 스모크"
 ```
 
+**Task 5 코드 리뷰 반영**: 열거 결과 0개면 `throw`(README 빈 목록 덮어쓰기 방지), `a.pathname` + `startsWith('/documentation/')` 필터, `textContent` 제목, 빈 dir/slug 불변식 검사. 커밋 `fix(gendocs): 열거 0개면 실패, pathname 기반 필터, textContent 제목 (Task 5 리뷰 반영)`.
+
 **구현 시 확인된 이탈(승인)**: 실제 leaf 는 23개(스펙의 24 는 합계 오기) → `EXPECTED_PAGES = 23`. 사이드바 하단 전역 링크(`Home`, `Documentation`(`/documentation`), `Products` …)는 `side-bar-link-container permanent` 클래스라 `Documentation → documentation/` 빈 그룹이 생김 → 셀렉터를 `mat-sidenav a.side-bar-link-container:not(.permanent)` 로.
 
 ---
@@ -890,7 +892,9 @@ async function extractPage(page) {
       targets = targets.slice(0, limit);
     }
 
-    const generatedAt = new Date().toISOString().slice(0, 10);
+    // 로컬 날짜(KST) — fetch-docs.sh 의 `date +%Y-%m-%d` 와 같은 기준
+    const d = new Date();
+    const generatedAt = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const failures = [];
     let ok = 0;
     for (const t of targets) {
@@ -927,9 +931,13 @@ async function extractPage(page) {
       for (const p of g.pages) if (await exists(path.join(OUT_ROOT, g.dir, `${p.slug}.md`))) pages.push(p);
       if (pages.length) present.push({ ...g, pages });
     }
-    const oldReadme = await readFile(path.join(OUT_ROOT, 'README.md'), 'utf8').catch(() => '');
-    await mkdir(OUT_ROOT, { recursive: true });
-    await writeFile(path.join(OUT_ROOT, 'README.md'), renderIndex(present, parseSourceRows(oldReadme)));
+    if (present.length) {
+      const oldReadme = await readFile(path.join(OUT_ROOT, 'README.md'), 'utf8').catch(() => '');
+      await mkdir(OUT_ROOT, { recursive: true });
+      await writeFile(path.join(OUT_ROOT, 'README.md'), renderIndex(present, parseSourceRows(oldReadme)));
+    } else {
+      console.warn('  생성된 페이지가 없어 README.md 를 갱신하지 않음');
+    }
     await writeFile(FAILURES, failures.join('\n'));
     console.log(`done: ${ok} ok, ${failures.length} failed (failures.log); index ${present.reduce((n, g) => n + g.pages.length, 0)} pages`);
 ```
