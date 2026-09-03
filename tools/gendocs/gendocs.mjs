@@ -26,10 +26,10 @@ async function enumerate(page) {
   await page.waitForSelector('mat-sidenav a.side-bar-link-container:not(.permanent)', { timeout: 30000 });
   const links = await page.$$eval('mat-sidenav a.side-bar-link-container:not(.permanent)', (as) =>
     as.map((a) => ({
-      href: a.getAttribute('href'),
-      title: (a.querySelector('.side-bar-link-title')?.innerText || a.innerText).trim().replace(/\s+/g, ' '),
+      href: a.pathname,
+      title: (a.querySelector('.side-bar-link-title')?.textContent || a.textContent).trim().replace(/\s+/g, ' '),
       leaf: a.classList.contains('indent-level-1'),
-    })).filter((l) => l.href && l.href.startsWith('/documentation')),
+    })).filter((l) => l.href && l.href.startsWith('/documentation/')),
   );
   return buildNav(links);
 }
@@ -43,6 +43,11 @@ async function main() {
 
     const nav = await enumerate(page);
     const total = nav.reduce((n, g) => n + g.pages.length, 0);
+    if (total === 0) throw new Error('사이드바 열거 결과 0개 — 셀렉터(mat-sidenav a.side-bar-link-container)를 확인하세요');
+    for (const g of nav) {
+      if (!g.dir) throw new Error(`빈 그룹 디렉터리명: ${JSON.stringify(g.group)}`);
+      for (const p of g.pages) if (!p.slug) throw new Error(`빈 slug: ${p.href}`);
+    }
     console.log(`enumerated ${total} pages in ${nav.length} groups`);
     if (total !== EXPECTED_PAGES) console.warn(`  WARN: expected ${EXPECTED_PAGES} pages (site changed?)`);
     if (process.env.ENUM_ONLY) {
