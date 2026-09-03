@@ -1,0 +1,3 @@
+# tools/gendocs (Node 크롤러) 산출물
+tools/gendocs/node_modules/
+tools/gendocs/failures.log
