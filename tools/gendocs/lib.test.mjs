@@ -55,6 +55,11 @@ test('redactToken replaces the logged-out sentence and real-looking tokens', () 
   assert.strictEqual(redactToken('{"eventName":"subscribe","authorization":"0123456789abcdef0123456789abcdef01234567"}'), '{"eventName":"subscribe","authorization":"<TOKEN>"}');
   assert.strictEqual(redactToken('{ "token": "0123456789abcdef0123456789abcdef01234567" }'), '{ "token": "<TOKEN>" }');
   assert.strictEqual(redactToken('token=<TOKEN>'), 'token=<TOKEN>');
+  assert.strictEqual(redactToken("'Authorization' : 'Token Not logged-in or registered. Please login or register to see your API Token'"), "'Authorization' : 'Token <TOKEN>'");
+  assert.strictEqual(redactToken('{"eventName":"subscribe","authorization":"Not logged-in or registered. Please login or register to see your API Token"}'), '{"eventName":"subscribe","authorization":"<TOKEN>"}');
+  assert.strictEqual(redactToken("{'eventName':'subscribe','authorization':'0123456789abcdef0123456789abcdef01234567'}"), "{'eventName':'subscribe','authorization':'<TOKEN>'}");
+  assert.strictEqual(redactToken('token abcdefghijklmnopqrstuvwxyz1234'), 'token <TOKEN>');
+  assert.strictEqual(redactToken('Click here to see your API Token.'), 'Click here to see your API Token.');
 });
 
 test('escapeCell escapes pipes and turns newlines into <br>', () => {
@@ -174,4 +179,19 @@ test('renderPage redacts tokens that appear outside code blocks', () => {
   assert.doesNotMatch(md, /0123456789abcdef/);
   assert.match(md, /\?token=<TOKEN> in the URL/);
   assert.match(md, /Authorization: Token <TOKEN>/);
+});
+
+test('renderBlocks skips empty headings and tolerates leading whitespace in boilerplate', () => {
+  const md = renderBlocks([
+    { type: 'heading', level: 2, text: '   ' },
+    { type: 'para', md: '  Just remember, you will need your token in order to connect.' },
+    { type: 'para', md: 'Kept.' },
+  ]);
+  assert.strictEqual(md, 'Kept.\n');
+});
+
+test('renderBlocks renders tab headings at level+1 when called with level 3 or before any heading', () => {
+  const tabs = { type: 'tabs', tabs: [{ name: 'Request', blocks: [{ type: 'para', md: 'p' }] }] };
+  assert.match(renderBlocks([tabs], 3), /^#### Request\n\np\n$/);
+  assert.match(renderBlocks([tabs]), /^### Request\n\np\n$/);
 });

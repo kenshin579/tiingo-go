@@ -28,15 +28,18 @@ export function buildNav(links) {
   return nav;
 }
 
-// redactToken: 예시 코드의 토큰 값을 <TOKEN> 으로. 비로그인 안내 문장(공백 포함), 쿼리 `token=`,
-// 헤더 `Authorization: Token <hex>`, JSON `"token"|"authorization": "<...>"` 형태를 대소문자 무시로
-// 치환한다(원문 표기는 캡처로 보존). 실제 Tiingo 토큰은 40자 hex 이므로 영숫자 20자 이상을 값으로 본다.
+// 토큰 값으로 볼 문자열: 비로그인 안내 문장(공백 포함, 따옴표/줄바꿈/& 앞까지) 또는 영숫자 20자 이상
+// (실제 Tiingo 토큰은 40자 hex).
+const TOKEN_VALUE = `(?:Not logged-in[^"'\\n&]*|[A-Za-z0-9]{20,})`;
+
+// redactToken: 예시 코드의 토큰 값을 <TOKEN> 으로. 쿼리 `token=…`, 헤더 `Authorization: Token …`,
+// 따옴표 필드 `"token"|"authorization": "…"`('…' 도) 세 형태를 대소문자 무시로 치환한다.
+// 원문 표기(token=/Token /따옴표)는 캡처로 보존한다.
 export function redactToken(text) {
   return String(text)
-    .replace(/(token=)Not logged-in[^"'\n&]*/gi, '$1<TOKEN>')
-    .replace(/(token=)[A-Za-z0-9]{20,}/gi, '$1<TOKEN>')
-    .replace(/(Token\s+)[A-Za-z0-9]{20,}/g, '$1<TOKEN>')
-    .replace(/("(?:token|authorization)"\s*:\s*")[A-Za-z0-9]{20,}(")/gi, '$1<TOKEN>$2');
+    .replace(new RegExp(`(token=)${TOKEN_VALUE}`, 'gi'), '$1<TOKEN>')
+    .replace(new RegExp(`(token[ \\t]+)${TOKEN_VALUE}`, 'gi'), '$1<TOKEN>')
+    .replace(new RegExp(`(["'](?:token|authorization)["']\\s*:\\s*)(["'])${TOKEN_VALUE}\\2`, 'gi'), '$1$2<TOKEN>$2');
 }
 
 // escapeCell: md 표 셀용 — 앞뒤 공백 제거, '|' 이스케이프, 줄바꿈(연속 포함) → <br>
@@ -64,9 +67,9 @@ export function orderTabs(tabs) {
     .map((x) => x.t);
 }
 
-// isBoilerplate: 모든 페이지에 반복되는 토큰 안내 문단
+// isBoilerplate: 모든 페이지에 반복되는 토큰 안내 문단(앞 공백 허용)
 function isBoilerplate(md) {
-  return /^Just remember, you will need your token/.test(md) || /^Click here to see your API Token/.test(md);
+  return /^\s*(Just remember, you will need your token|Click here to see your API Token)/.test(md);
 }
 
 // renderBlocks: 블록 배열 → md. level 은 현재 섹션 헤딩 깊이(기본 2). h1/h2 → ##, h3 → ###.
@@ -77,8 +80,9 @@ export function renderBlocks(blocks, level = 2) {
   for (const b of blocks) {
     switch (b.type) {
       case 'heading':
+        if (!b.text || !b.text.trim()) break;
         cur = b.level <= 2 ? 2 : 3;
-        out.push(`${'#'.repeat(cur)} ${b.text}`, '');
+        out.push(`${'#'.repeat(cur)} ${b.text.trim()}`, '');
         break;
       case 'para':
         if (b.md && !isBoilerplate(b.md)) out.push(b.md, '');
