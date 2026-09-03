@@ -521,13 +521,21 @@ export function renderPage({ title, sourceUrl, generatedAt, blocks }) {
 - [ ] **Step 4: 테스트 통과 확인**
 
 Run: `cd tools/gendocs && npm test`
-Expected: `# pass 15`, `# fail 0`
+Expected: `# pass 15`, `# fail 0` (Task 3 리뷰 반영 커밋 후에는 17)
 
 - [ ] **Step 5: 커밋**
 
 ```bash
 git add tools/gendocs/lib.mjs tools/gendocs/lib.test.mjs
 git commit -m "feat(gendocs): 블록 → md 렌더 (헤딩/탭 재정렬/표/코드/보일러플레이트 제거)"
+```
+
+- [ ] **Step 6: Task 3 코드 리뷰 반영** (리뷰어 지적: 비로그인 안내 문장이 헤더 `Token Not logged-in…`/따옴표 필드 `"authorization":"Not logged-in…"` 형태에서 치환되지 않음, Python dict 작은따옴표 `'authorization':'…'` 미대응, `Token\s+` 에 `i` 없음, 보일러플레이트 앞 공백, 빈 헤딩 `## `)
+
+`redactToken` 을 공용 값 패턴 `TOKEN_VALUE = (?:Not logged-in[^"'\n&]*|[A-Za-z0-9]{20,})` 로 세 형태(`token=`, `token[ \t]+`, `["'](token|authorization)["']\s*:\s*(["'])…\2`) 모두 대소문자 무시로 통일. `isBoilerplate` 는 `^\s*` 허용. `renderBlocks` 의 heading 은 빈 텍스트면 건너뜀. 테스트: redactToken assertion 5개 추가 + `renderBlocks` 테스트 2개(빈 헤딩/앞 공백 보일러플레이트, level 3 및 헤딩 전 탭 → `####`/`###`) 추가 → `# pass 17`.
+
+```bash
+git commit -m "fix(gendocs): redactToken 헤더/작은따옴표 필드의 비로그인 문구 치환, 빈 헤딩 가드 (Task 3 리뷰 반영)"
 ```
 
 ---
@@ -640,7 +648,7 @@ export function renderIndex(nav, sourceRows) {
 - [ ] **Step 4: 테스트 통과 확인**
 
 Run: `cd tools/gendocs && npm test`
-Expected: `# pass 17`, `# fail 0`
+Expected: `# pass 19`, `# fail 0`
 
 - [ ] **Step 5: 커밋**
 
@@ -941,7 +949,7 @@ Expected:
 - [ ] **Step 5: 단위 테스트 재실행 + 커밋**
 
 Run: `cd tools/gendocs && npm test`
-Expected: `# pass 17`, `# fail 0`
+Expected: `# pass 19`, `# fail 0`
 
 ```bash
 cd /Users/user/src/workspace_moneyflow/tiingo-go
@@ -1156,7 +1164,7 @@ git commit -m "docs: Tiingo 공식 llms.txt/llms-full.txt 보관 + fetch-docs.sh
 
 ```bash
 cd /Users/user/src/workspace_moneyflow/tiingo-go
-(cd tools/gendocs && npm test)                                    # pass 17, fail 0
+(cd tools/gendocs && npm test)                                    # pass 19, fail 0
 find docs/api -name '*.md' -not -name README.md | wc -l          # 24
 test ! -s tools/gendocs/failures.log && echo "no failures"
 grep -rE "Not logged-in|token=[A-Za-z0-9]{20,}" docs/api || echo "no token leak"
@@ -1179,7 +1187,7 @@ gh pr create --title "docs: Tiingo API 문서 카탈로그 (웹 24페이지 md +
 - Go 코드 없음(`go.mod` 는 SDK 스펙에서)
 
 ## Test plan
-- [x] `cd tools/gendocs && npm test` — 17 pass
+- [x] `cd tools/gendocs && npm test` — 19 pass
 - [x] `npm run gen` — 24 ok / 0 failed, `docs/api/README.md` 링크 24개 = 파일 24개
 - [x] `grep` 으로 토큰·로그인 문구 유출 없음
 - [x] `./scripts/fetch-docs.sh` 2회 실행 — 2회째 "변경 없음", README 원본 표 보존
