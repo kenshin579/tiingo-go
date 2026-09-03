@@ -1,8 +1,8 @@
 // 순수 변환 로직 — Playwright/네트워크/파일시스템 의존 없음 (단위테스트 대상).
 
-// slugFromHref: '/documentation/corporate-actions/dividends' → 'dividends'
+// slugFromHref: '/documentation/corporate-actions/dividends' → 'dividends' (?query/#hash 제거)
 export function slugFromHref(href) {
-  return String(href).replace(/\/+$/, '').split('/').pop();
+  return String(href).split(/[?#]/)[0].replace(/\/+$/, '').split('/').pop();
 }
 
 // groupDir: 사이드바 그룹 제목 '2. REST' → 디렉터리 'rest'
@@ -28,17 +28,20 @@ export function buildNav(links) {
   return nav;
 }
 
-// redactToken: 예시 코드의 token= 값을 <TOKEN> 으로. 비로그인 안내 문장(공백 포함)과
-// 실제 토큰처럼 보이는 영숫자 20자 이상을 모두 치환한다.
+// redactToken: 예시 코드의 토큰 값을 <TOKEN> 으로. 비로그인 안내 문장(공백 포함), 쿼리 `token=`,
+// 헤더 `Authorization: Token <hex>`, JSON `"token"|"authorization": "<...>"` 형태를 대소문자 무시로
+// 치환한다(원문 표기는 캡처로 보존). 실제 Tiingo 토큰은 40자 hex 이므로 영숫자 20자 이상을 값으로 본다.
 export function redactToken(text) {
   return String(text)
-    .replace(/token=Not logged-in[^"'\n&]*/g, 'token=<TOKEN>')
-    .replace(/token=[A-Za-z0-9]{20,}/g, 'token=<TOKEN>');
+    .replace(/(token=)Not logged-in[^"'\n&]*/gi, '$1<TOKEN>')
+    .replace(/(token=)[A-Za-z0-9]{20,}/gi, '$1<TOKEN>')
+    .replace(/(Token\s+)[A-Za-z0-9]{20,}/g, '$1<TOKEN>')
+    .replace(/("(?:token|authorization)"\s*:\s*")[A-Za-z0-9]{20,}(")/gi, '$1<TOKEN>$2');
 }
 
 // escapeCell: md 표 셀용 — 앞뒤 공백 제거, '|' 이스케이프, 줄바꿈(연속 포함) → <br>
 export function escapeCell(text) {
-  return String(text).trim().replace(/\|/g, '\\|').replace(/\s*\n\s*(\n\s*)*/g, '<br>');
+  return String(text).trim().replace(/\|/g, '\\|').replace(/\s*\n\s*/g, '<br>');
 }
 
 // renderTable: {header, rows} → md 표. 헤더나 행이 없으면 빈 문자열.

@@ -6,6 +6,7 @@ test('slugFromHref returns last path segment', () => {
   assert.strictEqual(slugFromHref('/documentation/corporate-actions/dividends'), 'dividends');
   assert.strictEqual(slugFromHref('/documentation/end-of-day'), 'end-of-day');
   assert.strictEqual(slugFromHref('/documentation/websockets/iex/'), 'iex');
+  assert.strictEqual(slugFromHref('/documentation/end-of-day?x=1#top'), 'end-of-day');
 });
 
 test('groupDir lowercases the group title without its number', () => {
@@ -49,6 +50,11 @@ test('redactToken replaces the logged-out sentence and real-looking tokens', () 
   );
   assert.strictEqual(redactToken('?token=0123456789abcdef0123456789abcdef01234567&x=1'), '?token=<TOKEN>&x=1');
   assert.strictEqual(redactToken('no token here'), 'no token here');
+  assert.strictEqual(redactToken('Token=ABCDEF0123456789ABCDEF0123456789ABCDEF01'), 'Token=<TOKEN>');
+  assert.strictEqual(redactToken('Authorization: Token 0123456789abcdef0123456789abcdef01234567'), 'Authorization: Token <TOKEN>');
+  assert.strictEqual(redactToken('{"eventName":"subscribe","authorization":"0123456789abcdef0123456789abcdef01234567"}'), '{"eventName":"subscribe","authorization":"<TOKEN>"}');
+  assert.strictEqual(redactToken('{ "token": "0123456789abcdef0123456789abcdef01234567" }'), '{ "token": "<TOKEN>" }');
+  assert.strictEqual(redactToken('token=<TOKEN>'), 'token=<TOKEN>');
 });
 
 test('escapeCell escapes pipes and turns newlines into <br>', () => {
