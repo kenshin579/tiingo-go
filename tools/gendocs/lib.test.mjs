@@ -233,3 +233,26 @@ test('renderIndex → parseSourceRows round-trips the source rows', () => {
   assert.deepStrictEqual(parseSourceRows(renderIndex(nav, rows)), rows);
   assert.match(renderIndex(nav, rows), /llms 원본 2개/);
 });
+
+test('renderBlocks renders headings inside a tab one level below the tab heading', () => {
+  const md = renderBlocks([
+    { type: 'heading', level: 2, text: '3.4.2 Reference Price' },
+    { type: 'tabs', tabs: [{ name: 'Response', blocks: [
+      { type: 'para', md: 'top-level fields' },
+      { type: 'heading', level: 3, text: 'Reference Price Update Messages' },
+      { type: 'para', md: 'update fields' },
+    ] }] },
+    { type: 'heading', level: 2, text: '3.4.3 Next' },
+  ]);
+  assert.match(md, /### Response\n\ntop-level fields\n\n#### Reference Price Update Messages\n\nupdate fields\n\n## 3\.4\.3 Next/);
+});
+
+test('renderBlocks keeps h4-h6 depth (capped at 6)', () => {
+  const md = renderBlocks([
+    { type: 'heading', level: 2, text: '2.8.6 FAQ' },
+    { type: 'heading', level: 4, text: 'Do you use XBRL?' },
+    { type: 'para', md: 'Yes.' },
+    { type: 'heading', level: 6, text: 'deep' },
+  ]);
+  assert.strictEqual(md, '## 2.8.6 FAQ\n\n#### Do you use XBRL?\n\nYes.\n\n###### deep\n');
+});

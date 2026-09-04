@@ -72,16 +72,17 @@ function isBoilerplate(md) {
   return /^\s*(Just remember, you will need your token|Click here to see your API Token)/.test(md);
 }
 
-// renderBlocks: 블록 배열 → md. level 은 현재 섹션 헤딩 깊이(기본 2). h1/h2 → ##, h3 → ###.
-// 탭 헤딩은 현재 섹션보다 한 단계 아래(최대 ####).
-export function renderBlocks(blocks, level = 2) {
+// renderBlocks: 블록 배열 → md. level 은 현재 섹션 헤딩 깊이(기본 2). h1/h2 → ##, h3~h6 → 같은 깊이(최대 6).
+// headingFloor 는 헤딩의 최소 깊이 — 탭 본문 안에서는 탭 헤딩+1 로 내려 계층을 유지한다.
+// 탭 헤딩은 현재 섹션보다 한 단계 아래(최대 5).
+export function renderBlocks(blocks, level = 2, headingFloor = 2) {
   const out = [];
   let cur = level;
   for (const b of blocks) {
     switch (b.type) {
       case 'heading':
         if (!b.text || !b.text.trim()) break;
-        cur = b.level <= 2 ? 2 : 3;
+        cur = Math.min(Math.max(b.level <= 2 ? 2 : b.level, headingFloor), 6);
         out.push(`${'#'.repeat(cur)} ${b.text.trim()}`, '');
         break;
       case 'para':
@@ -99,9 +100,10 @@ export function renderBlocks(blocks, level = 2) {
         break;
       }
       case 'tabs': {
-        const h = '#'.repeat(Math.min(cur + 1, 4));
+        const depth = Math.min(cur + 1, 5);
+        const h = '#'.repeat(depth);
         for (const tab of orderTabs(b.tabs)) {
-          const inner = renderBlocks(tab.blocks, cur);
+          const inner = renderBlocks(tab.blocks, depth, Math.min(depth + 1, 6));
           if (!inner.trim()) continue;
           out.push(`${h} ${tab.name}`, '', inner);
         }

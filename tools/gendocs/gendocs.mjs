@@ -18,6 +18,7 @@ const OUT_ROOT = path.resolve(HERE, '../../docs/api'); // tools/gendocs → repo
 const FAILURES = path.join(HERE, 'failures.log');
 const DELAY_MS = 500;
 const EXPECTED_PAGES = 23;
+const CANVAS = 'tiingo-api-canvas';
 
 // enumerate: 사이드바(mat-sidenav)의 링크를 문서 순서로 읽어 nav 구조를 만든다.
 // .permanent 는 사이드바 하단의 전역 내비(Home/Documentation/Products…)라 제외한다.
@@ -34,19 +35,18 @@ async function enumerate(page) {
   return buildNav(links);
 }
 
-// extractPage: 현재 페이지의 tiingo-api-canvas 를 문서 순서로 걸어 블록 배열을 만든다(브라우저 컨텍스트).
-// 셀렉터(2026-09-04 확인): tiingo-api-canvas, h1-h3, p, ul/ol, pre, mat-tab-group > .mat-tab-label /
+// extractPage: 현재 페이지의 CANVAS(tiingo-api-canvas) 를 문서 순서로 걸어 블록 배열을 만든다(브라우저 컨텍스트).
+// 셀렉터(2026-09-04 확인): tiingo-api-canvas, h1-h6, p, ul/ol, pre, mat-tab-group > .mat-tab-label /
 // .mat-tab-body-active, tiingo-doc-table .header-row .header-cell / .parameter-row .parameter-cell
+// 반환 dropped: 걸으면서 어떤 블록으로도 잡지 못한 채 버린 텍스트 요소(관측용 — 셀렉터 누락 탐지).
 async function extractPage(page) {
-  return await page.evaluate(async () => {
+  return await page.evaluate(async (CANVAS) => {
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-    const canvas = document.querySelector('tiingo-api-canvas');
+    const canvas = document.querySelector(CANVAS);
     const title = document.title.replace(/\s*\|\s*Tiingo\s*$/, '').trim();
-    if (!canvas) return { title, blocks: [], warn: 'no tiingo-api-canvas' };
+    if (!canvas) return { title, blocks: [], dropped: [], warn: `no ${CANVAS}` };
 
-    // 비로그인 상태에서 토큰 자리에 렌더되는 문구(bare pre — token= 패턴이 아니라 렌더러의 redactToken 이 못 잡는다)
-    const NOT_LOGGED_IN = 'Not logged-in or registered. Please login or register to see your API Token';
-    const BLOCK_TAGS = new Set(['div', 'p', 'ul', 'ol', 'pre', 'h1', 'h2', 'h3', 'h4', 'table', 'mat-tab-group', 'tiingo-doc-table', 'section', 'article']);
+    const BLOCK_TAGS = new Set(['div', 'p', 'ul', 'ol', 'pre', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'table', 'mat-tab-group', 'tiingo-doc-table', 'section', 'article']);
     const clean = (s) => s.replace(/[ \t\u00a0]+/g, ' ').replace(/ *\n */g, '\n').trim();
 
     // inline: 요소 안의 텍스트를 md 인라인으로 (링크는 절대 URL, code 는 백틱, strong 은 **)
@@ -73,13 +73,16 @@ async function extractPage(page) {
 
     const hasBlockChild = (el) => [...el.querySelectorAll('*')].some((c) => BLOCK_TAGS.has(c.tagName.toLowerCase()));
 
+    const blocks = [];
+    const dropped = [];
+
     // walk: root 의 자식을 문서 순서로 순회. lang 은 언어 탭 안이면 'python'.
     const walk = async (root, blocks, lang) => {
       for (const el of root.children) {
         const tag = el.tagName.toLowerCase();
         // 섹션마다 반복되는 브레드크럼("2.1 REST - End-of-Day Prices")은 본문이 아니므로 건너뛴다.
         if (el.classList.contains('documentation-breadcrumb-top-header')) continue;
-        if (/^h[1-3]$/.test(tag)) {
+        if (/^h[1-6]$/.test(tag)) {
           const text = clean(el.innerText);
           if (text) blocks.push({ type: 'heading', level: Number(tag[1]), text });
         } else if (tag === 'p' || (tag === 'div' && !hasBlockChild(el) && clean(el.innerText))) {
@@ -90,7 +93,8 @@ async function extractPage(page) {
         } else if (tag === 'pre') {
           let text = el.innerText.replace(/\s+$/, '');
           if (!text.trim()) continue;
-          if (text.trim() === NOT_LOGGED_IN) text = '<TOKEN>';
+          // 비로그인 상태에서 토큰 자리에 렌더되는 문구(bare pre — token= 패턴이 아니라 렌더러의 redactToken 이 못 잡는다)
+          if (text.trim().startsWith('Not logged-in')) text = '<TOKEN>';
           const isJson = /^[\[{]/.test(text.trim());
           blocks.push({ type: 'code', lang: isJson ? 'json' : lang, text });
         } else if (tag === 'tiingo-doc-table') {
@@ -99,6 +103,9 @@ async function extractPage(page) {
           await tabs(el, blocks);
         } else if (el.children.length) {
           await walk(el, blocks, lang);
+        } else {
+          const t = clean(el.innerText);
+          if (t) dropped.push(`<${tag}> ${t.slice(0, 60)}`);
         }
       }
     };
@@ -108,6 +115,7 @@ async function extractPage(page) {
     const tabs = async (group, blocks) => {
       const own = (sel) => [...group.querySelectorAll(sel)].filter((e) => e.closest('mat-tab-group') === group);
       const labels = own('.mat-tab-label');
+      if (!labels.length) { dropped.push('<mat-tab-group> 라벨 없음'); return; }
       const names = labels.map((l) => l.innerText.trim());
       const isLang = names.includes('Python');
       const out = [];
@@ -125,10 +133,9 @@ async function extractPage(page) {
       if (!isLang) blocks.push({ type: 'tabs', tabs: out });
     };
 
-    const blocks = [];
     await walk(canvas, blocks, '');
-    return { title, blocks };
-  });
+    return { title, blocks, dropped };
+  }, CANVAS);
 }
 
 async function main() {
@@ -178,10 +185,11 @@ async function main() {
         if (attempt > 0) await page.waitForTimeout(3000);
         try {
           await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
-          await page.waitForSelector('tiingo-api-canvas', { timeout: 30000 });
+          await page.waitForSelector(CANVAS, { timeout: 30000 });
           await page.waitForTimeout(1000);
           const r = await extractPage(page);
           if (r.warn) console.warn(`  WARN ${t.href}: ${r.warn}`);
+          if (r.dropped.length) console.warn(`  WARN ${t.href}: dropped ${r.dropped.length} — ${r.dropped.join(' | ')}`);
           if (r.blocks.length) result = r;
           else console.warn(`  empty blocks: ${t.href} (attempt ${attempt + 1})`);
         } catch (e) {
@@ -191,7 +199,7 @@ async function main() {
       if (!result) { failures.push(t.href); continue; }
       const dir = path.join(OUT_ROOT, t.dir);
       await mkdir(dir, { recursive: true });
-      await writeFile(path.join(dir, `${t.slug}.md`), renderPage({ title: result.title, sourceUrl: url, generatedAt, blocks: result.blocks }));
+      await writeFile(path.join(dir, `${t.slug}.md`), renderPage({ title: result.title || t.title, sourceUrl: url, generatedAt, blocks: result.blocks }));
       ok++;
       console.log(`  wrote ${t.dir}/${t.slug}.md (${result.blocks.length} blocks)`);
       await page.waitForTimeout(DELAY_MS);
@@ -212,8 +220,10 @@ async function main() {
     } else {
       console.warn('  생성된 페이지가 없어 README.md 를 갱신하지 않음');
     }
-    await writeFile(FAILURES, failures.join('\n'));
-    console.log(`done: ${ok} ok, ${failures.length} failed (failures.log); index ${present.reduce((n, g) => n + g.pages.length, 0)} pages`);
+    // failures.log 는 전체/RETRY 실행에서만 갱신 — ONLY/LIMIT 부분 실행이 이전 전체 실행의 실패 목록을 덮어쓰지 않도록.
+    const partial = Boolean(process.env.ONLY || process.env.LIMIT);
+    if (!partial) await writeFile(FAILURES, failures.join('\n'));
+    console.log(`done: ${ok} ok, ${failures.length} failed${partial ? ' [failures.log 미갱신: ONLY/LIMIT]' : ' (failures.log)'}; index ${present.reduce((n, g) => n + g.pages.length, 0)} pages`);
   } finally {
     await browser.close();
   }
