@@ -20,15 +20,19 @@ type Date struct {
 	time.Time
 }
 
-// parse 는 RFC3339 타임스탬프와 YYYY-MM-DD 를 모두 받아 UTC 로 정규화한다.
+// parse 는 RFC3339 타임스탬프와 YYYY-MM-DD 를 모두 받는다.
 // 빈 문자열은 zero value 다. UnmarshalJSON 과 UnmarshalText 가 함께 쓴다.
+//
+// 오프셋이 있는 타임스탬프는 UTC 로 환산하지 않고 **표기된 벽시계 날짜**를 취한다.
+// 날짜 전용 타입이므로 "2019-01-02T19:00:00-05:00" 은 2019-01-02 여야지, UTC 환산 결과인
+// 2019-01-03 이 되면 안 된다(하루 밀림).
 func (d *Date) parse(s string) error {
 	if s == "" {
 		d.Time = time.Time{}
 		return nil
 	}
 	if t, err := time.Parse(time.RFC3339, s); err == nil {
-		d.Time = t.UTC()
+		d.Time = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
 		return nil
 	}
 	t, err := time.Parse(DateLayout, s)

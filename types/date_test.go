@@ -20,7 +20,8 @@ func TestDate_UnmarshalJSON(t *testing.T) {
 		{"날짜만", `"1980-12-12"`, time.Date(1980, 12, 12, 0, 0, 0, 0, time.UTC)},
 		{"null", `null`, time.Time{}},
 		{"빈 문자열", `""`, time.Time{}},
-		{"RFC3339 음수 오프셋", `"2019-01-02T19:00:00-05:00"`, time.Date(2019, 1, 3, 0, 0, 0, 0, time.UTC)}, // UTC 정규화로 날짜가 하루 밀린다
+		{"RFC3339 음수 오프셋", `"2019-01-02T19:00:00-05:00"`, time.Date(2019, 1, 2, 0, 0, 0, 0, time.UTC)}, // 표기된 벽시계 날짜를 취한다(UTC 환산 시 하루 밀림)
+		{"RFC3339 양수 오프셋", `"2019-01-02T02:00:00+09:00"`, time.Date(2019, 1, 2, 0, 0, 0, 0, time.UTC)}, // 반대 방향도 마찬가지
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
