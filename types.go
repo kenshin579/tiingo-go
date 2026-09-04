@@ -11,3 +11,9 @@ const DateLayout = types.DateLayout
 // null 이나 빈 문자열은 zero value 가 되며 IsZero() 로 구분한다.
 // types.Date 의 별칭이라 카테고리 패키지(eod 등)와 같은 타입이다.
 type Date = types.Date
+
+// Time 은 시각까지 의미 있는 Tiingo 타임스탬프다(예: statementLastUpdated).
+// 날짜만 필요한 필드는 Date 를 쓴다 — Date 는 시각을 버리고 날짜만 남긴다.
+// null 이나 빈 문자열은 zero value 가 되며 IsZero() 로 구분한다.
+// types.Time 의 별칭이라 카테고리 패키지(fundamentals 등)와 같은 타입이다.
+type Time = types.Time

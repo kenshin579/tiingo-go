@@ -55,6 +55,8 @@ func (t Time) MarshalJSON() ([]byte, error) {
 func (t Time) MarshalText() ([]byte, error) { return []byte(t.String()), nil }
 
 // String 은 RFC3339 를 반환한다. zero value 는 빈 문자열.
+// 소수부는 RFC3339Nano 규칙에 따라 뒤쪽 0 이 잘린다(.440 → .44). 값이 달라지는 것은 아니라
+// 다시 파싱하면 같은 시각이 나온다.
 func (t Time) String() string {
 	if t.Time.IsZero() {
 		return ""
