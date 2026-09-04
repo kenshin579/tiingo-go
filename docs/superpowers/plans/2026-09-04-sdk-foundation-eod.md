@@ -1523,3 +1523,13 @@ EOF
 | v0.1.0 릴리스 | Task 9 Step 3 (follow-up 으로 명시) |
 
 빠진 스펙 항목 없음. 태스크 간 이름 일관성 확인: `httpclient.New`/`Config`/`GetJSON`/`GetRaw`/`APIError`/`ErrNotFound`, `eod.New`/`Client`/`Meta`/`Price`/`PriceOptions`/`ResampleFreq`, `tiingo.Date`/`DateLayout`/`APIKeyEnv` — 정의 태스크와 사용 태스크의 표기가 일치한다.
+
+---
+
+## 실행 기록 (2026-09-04)
+
+- Task 1~5, 4.5 는 subagent-driven 으로 실행 — 각 태스크마다 스펙 준수 리뷰 + 코드 품질 리뷰를 거쳤고 지적 사항을 모두 반영했다(`redactToken` 계열 없음, 대신: Task 1 LICENSE 누락 → Task 8 편입, Task 2 `MarshalText`/`UnmarshalText` 불일치·빈 문자열, Task 3 `BaseURL` 끝 슬래시·타임아웃/취소 테스트 분리·429 행, Task 5 import 순환 → `types` 패키지 분리).
+- **Task 6~9 는 컨트롤러가 직접 구현**했다. 서브에이전트 모델(opus/sonnet)이 세션 한도에 걸려 디스패치가 불가능했기 때문이다. 계획에 코드가 그대로 명시돼 있어 TDD 순서(레드 확인 → 구현 → 그린)는 동일하게 지켰으나, **Task 5 코드 품질 리뷰와 Task 6~9 의 2단계 리뷰는 수행되지 않았다.** 후속으로 `/code-review` 를 돌리거나 서브에이전트 한도 회복 후 리뷰를 보강할 것.
+- Task 6 에서 fixture 를 카탈로그 예시 JSON 과 프로그램으로 대조해 완전 일치를 확인했다(4건, 13필드).
+- Task 7 에서 `go build ./examples/...` 는 단일 main 패키지 빌드가 레포 루트의 `eod/` 디렉터리와 이름이 겹쳐 실패한다 → `go build -o /dev/null ./examples/eod` 를 쓴다(README 에도 기록).
+- 최종 상태: 4패키지 테스트 통과(`-race` 포함), `go vet`(integration 태그 포함)·`gofmt` 클린, integration 4건은 `TIINGO_API_KEY` 부재로 SKIP.
