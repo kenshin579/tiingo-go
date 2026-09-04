@@ -22,8 +22,10 @@
 | `go.mod` | 모듈 선언, Go 1.25, testify |
 | `internal/httpclient/client.go` | HTTP 계층 하나: `Authorization: Token` 주입, GET, JSON 디코딩, `APIError`/`ErrNotFound` |
 | `internal/httpclient/client_test.go` | httptest 스텁 단위 테스트 |
-| `types.go` | `Date` — Tiingo 의 두 날짜 형식 파싱·직렬화 (순수, 의존성 없음) |
-| `types_test.go` | `Date` 단위 테스트 |
+| `types/date.go` | `Date` — Tiingo 의 두 날짜 형식 파싱·직렬화 (leaf 패키지, 의존성 없음) |
+| `types/date_test.go` | `Date` 단위 테스트 |
+| `types.go` | 루트에서 `tiingo.Date`/`DateLayout` 로 재노출하는 별칭 |
+| `types_alias_test.go` | 별칭 동일성 테스트 |
 | `errors.go` | `APIError`, `ErrNotFound` 를 루트 패키지로 재노출 |
 | `config.go` | functional option 3종 |
 | `client.go` | `tiingo.Client` 조립, `NewClient` |
@@ -714,6 +716,12 @@ git commit -m "feat: tiingo.Client 진입점, 옵션, 환경변수 생성자"
 ---
 
 ### Task 5: EOD 메타 엔드포인트
+
+**Step 0 (구현 중 발견 — import 순환 해소)**: 루트 `tiingo` 가 `eod` 를 import 하는데 `eod` 가 `Date` 때문에 `tiingo` 를 import 하면 순환이다(`import cycle not allowed` 실측 확인). `Date`/`DateLayout` 을 leaf 패키지 `types/date.go` 로 옮기고, 루트 `types.go` 는 `type Date = types.Date`, `const DateLayout = types.DateLayout` 별칭만 둔다(공개 이름 `tiingo.Date` 유지). `eod` 는 `types` 를 직접 import 해 필드를 `*types.Date` 로 선언한다. 커밋: `refactor: Date 를 types 패키지로 분리하고 루트에서 별칭 재노출 (import 순환 해소)`.
+
+**Task 2 코드 리뷰 반영**(같이 처리): `Date` 가 임베드된 `time.Time` 에서 `MarshalText`/`UnmarshalText` 를 승격받아 map 키·yaml 에서 RFC3339 로 나가고 `UnmarshalText("1980-12-12")` 가 실패한다 → 두 메서드를 명시 구현해 JSON 규칙(YYYY-MM-DD)과 일치시킨다. 빈 문자열 테스트·구조체 필드 테스트·음수 오프셋 행 추가. Tiingo 가 `"startDate":""` 를 줄 수 있으므로 `Meta` 필드 주석은 `nil 이거나 IsZero() 면 가격 데이터 없음`, 대응 테스트 추가. 커밋: `fix(types): MarshalText/UnmarshalText 를 JSON 규칙과 일치시키고 빈 문자열 처리 테스트 추가 (Task 2 리뷰 반영)`.
+
+**fixture**: `TIINGO_API_KEY` 부재로 문서 예시 기반. `permaTicker` 등 추가 필드 확인은 키 확보 후로 보류.
 
 **Files:**
 - Create: `eod/meta.go`, `eod/meta_test.go`, `eod/testdata/meta_aapl.json`
