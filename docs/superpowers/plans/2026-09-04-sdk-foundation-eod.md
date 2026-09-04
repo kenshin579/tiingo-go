@@ -1533,3 +1533,4 @@ EOF
 - Task 6 에서 fixture 를 카탈로그 예시 JSON 과 프로그램으로 대조해 완전 일치를 확인했다(4건, 13필드).
 - Task 7 에서 `go build ./examples/...` 는 단일 main 패키지 빌드가 레포 루트의 `eod/` 디렉터리와 이름이 겹쳐 실패한다 → `go build -o /dev/null ./examples/eod` 를 쓴다(README 에도 기록).
 - 최종 상태: 4패키지 테스트 통과(`-race` 포함), `go vet`(integration 태그 포함)·`gofmt` 클린, integration 4건은 `TIINGO_API_KEY` 부재로 SKIP.
+- **2026-09-04 실호출 검증 완료**: `TIINGO_API_KEY`(~/.zshrc)로 integration 4건 전부 PASS. 메타 응답 실측 결과 **문서 표의 6필드가 전부이고 `permaTicker`/OpenFIGI/`isActive` 는 오지 않는다** — `llms-full.txt` 의 해당 서술은 최소 무료 플랜·AAPL 기준으로는 사실이 아니므로 `Meta` 구조체에 추가할 필드가 없다(보류 항목 해소). `endDate` 는 조회 시점의 최신 거래일(2026-09-03)로 갱신된다.
