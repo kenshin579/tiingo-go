@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/kenshin579/tiingo-go/eod"
+	"github.com/kenshin579/tiingo-go/fundamentals"
 	"github.com/kenshin579/tiingo-go/internal/httpclient"
 )
 
@@ -12,7 +13,8 @@ import (
 type Client struct {
 	http *httpclient.Client
 
-	EOD *eod.Client // 일별 시세·메타(End-of-Day)
+	EOD          *eod.Client          // 일별 시세·메타(End-of-Day)
+	Fundamentals *fundamentals.Client // 재무제표·일별 지표(Fundamentals, 별도 구독)
 }
 
 // NewClient 는 API 키로 Client 를 만든다. 키가 비어 있으면 에러다.
@@ -32,5 +34,6 @@ func NewClient(apiKey string, opts ...Option) (*Client, error) {
 	})
 	c := &Client{http: hc}
 	c.EOD = eod.New(hc)
+	c.Fundamentals = fundamentals.New(hc)
 	return c, nil
 }
