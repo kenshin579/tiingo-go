@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -54,6 +55,7 @@ func New(cfg Config) *Client {
 	if base == "" {
 		base = DefaultBaseURL
 	}
+	base = strings.TrimSuffix(base, "/") // 끝 슬래시가 있으면 경로가 //tiingo/... 가 되어 404 난다
 	hc := cfg.HTTPClient
 	if hc == nil {
 		timeout := cfg.Timeout

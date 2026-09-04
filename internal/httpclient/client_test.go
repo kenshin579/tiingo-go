@@ -48,6 +48,7 @@ func TestGetJSON_에러응답_매핑(t *testing.T) {
 		{"error 키", http.StatusForbidden, `{"error":"You do not have permission"}`, "You do not have permission"},
 		{"message 키", http.StatusUnauthorized, `{"message":"Invalid token"}`, "Invalid token"},
 		{"JSON 아님", http.StatusInternalServerError, `boom`, "500 Internal Server Error"},
+		{"429 rate limit", http.StatusTooManyRequests, `{"detail":"Request was throttled."}`, "Request was throttled."},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -80,7 +81,7 @@ func TestGetJSON_디코딩실패(t *testing.T) {
 	assert.Error(t, c.GetJSON(context.Background(), "/x", nil, &out))
 }
 
-func TestGetJSON_컨텍스트_취소(t *testing.T) {
+func TestGetJSON_타임아웃(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(200 * time.Millisecond)
 	}))
@@ -89,6 +90,22 @@ func TestGetJSON_컨텍스트_취소(t *testing.T) {
 	c := New(Config{APIKey: "k", BaseURL: srv.URL, Timeout: 20 * time.Millisecond})
 	var out map[string]any
 	assert.Error(t, c.GetJSON(context.Background(), "/x", nil, &out))
+}
+
+func TestGetJSON_컨텍스트_취소(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(200 * time.Millisecond)
+	}))
+	defer srv.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
+	defer cancel()
+
+	c := New(Config{APIKey: "k", BaseURL: srv.URL})
+	var out map[string]any
+	err := c.GetJSON(ctx, "/x", nil, &out)
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, context.DeadlineExceeded), "컨텍스트 에러가 %%w 로 보존돼야 한다: %v", err)
 }
 
 func TestGetRaw(t *testing.T) {
@@ -107,4 +124,18 @@ func TestNew_기본값(t *testing.T) {
 	c := New(Config{APIKey: "k"})
 	assert.Equal(t, DefaultBaseURL, c.baseURL)
 	assert.Equal(t, 30*time.Second, c.http.Timeout)
+}
+
+func TestNew_BaseURL_끝슬래시_정규화(t *testing.T) {
+	var gotPath string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		_, _ = w.Write([]byte(`{}`))
+	}))
+	defer srv.Close()
+
+	c := New(Config{APIKey: "k", BaseURL: srv.URL + "/"})
+	var out map[string]any
+	require.NoError(t, c.GetJSON(context.Background(), "/tiingo/daily/aapl", nil, &out))
+	assert.Equal(t, "/tiingo/daily/aapl", gotPath, "베이스 URL 끝 슬래시가 경로를 //... 로 만들면 안 된다")
 }
