@@ -1208,7 +1208,7 @@ Expected:
 GET https://www.tiingo.com/llms.txt
 GET https://www.tiingo.com/llms-full.txt
   llms.txt: 갱신 (Last updated=2026-08-18)
-  llms-full.txt: 갱신 (Last updated=2026-08-14)
+  llms-full.txt: 갱신 (Last updated=2026-08-18)   # 파일 2행의 서두 "Last updated:" 가 섹션별 last_updated 보다 먼저 매치됨
 done → .../docs/api
 ```
 `update_readme_row` 의 `grep -qF` 검증은 `$BASE/$name` 이 README 의 출처 열(`https://www.tiingo.com/llms.txt`)과 같을 때만 통과한다. 기본 BASE 로 실행하면 일치한다.
