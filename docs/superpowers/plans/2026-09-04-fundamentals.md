@@ -456,6 +456,19 @@ git commit -m "feat(fundamentals): 패키지 골격 + 회사 메타 (Meta)"
 
 ---
 
+### Task 3.5: Task 1 리뷰 반영 (완료)
+
+리뷰 지적 2건, 둘 다 계획의 범위 누락이었다.
+
+1. (Important) 루트에 `Date` 별칭만 있고 `Time` 별칭이 없어 비대칭 — `Meta` 필드가 `types.Time` 이라 사용자가 타입 이름을 쓰려면 `types` 를 따로 import 해야 했다. `types.go` 에 `type Time = types.Time` 추가, `types_alias_test.go` 에 `TestTimeAlias` 추가.
+2. (Important) `types/date.go` 주석이 `Time` 도입 전 내용("시각이 의미 있는 필드는 `time.Time` 을 그대로 쓴다") → "`Time` 을 쓴다"로 갱신. `types/time.go` 의 `String()` 주석에 RFC3339Nano 의 뒤쪽 0 절삭 동작을 한 줄 추가.
+
+커밋 `fix(types): 루트 tiingo.Time 별칭 추가, Date 주석 갱신 (Task 1 리뷰 반영)`.
+
+**Task 3 구현 시 유념(리뷰 Minor)**: `Meta` 를 티커 없이 부르면 수천 건을 받는데, `encoding/json` 은 슬라이스 원소 하나라도 `UnmarshalJSON` 이 실패하면 배치 전체가 실패한다. `null`·빈 문자열은 안전하지만 Tiingo 가 타임스탬프 포맷을 바꾸면 전량 실패할 수 있다.
+
+---
+
 ### Task 4: 지표 정의 + 코드 상수
 
 **Files:** Create `fundamentals/definitions.go`, `fundamentals/definitions_test.go`, `fundamentals/codes.go`, `fundamentals/codes_test.go`
