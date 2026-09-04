@@ -37,6 +37,7 @@
 | `integration_test.go` | build tag `integration`, 실호출 계약 검증 |
 | `scripts/release.sh` | 릴리스 자동화 (fmp-go 와 동일 절차) |
 | `README.md` | 설치·사용·커버리지·인증 안내로 교체 |
+| `LICENSE` | MIT (fmp-go 와 동일) |
 
 **주석 규약(스펙 결정 6)**: 짧은 설명은 필드 오른쪽 줄 끝 주석, 한 줄(약 120자)에 안 들어가면 필드 위 주석. 타입·메서드에는 doc 주석. 모든 주석은 한국어.
 
@@ -1285,11 +1286,19 @@ git commit -m "feat: EOD 예제 + integration 테스트"
 
 ---
 
-### Task 8: README + 릴리스 스크립트
+### Task 8: README + 릴리스 스크립트 + LICENSE
 
 **Files:**
 - Modify: `README.md`
-- Create: `scripts/release.sh`
+- Create: `scripts/release.sh`, `LICENSE`
+
+**Task 1 코드 리뷰 반영**: 공개 Go 모듈인데 LICENSE 가 없다(계획 누락). 워크스페이스의 다른 공개 라이브러리 `fmp-go`/`ecos-go`/`opendart-go` 는 모두 MIT + `Copyright (c) 2026 kenshin579`. 같은 파일을 복사한다:
+
+```bash
+cp /Users/user/src/workspace_moneyflow/fmp-go/LICENSE LICENSE
+head -3 LICENSE   # MIT License / (빈 줄) / Copyright (c) 2026 kenshin579
+```
+`README.md` 하단에 `## 라이선스` 절(MIT, `LICENSE` 링크)을 추가하고, 커밋에 `LICENSE` 를 포함한다.
 
 - [ ] **Step 1: `README.md` 교체**
 
@@ -1408,8 +1417,8 @@ Expected: 테스트 전부 PASS, `gofmt clean`, 두 파일 charset=utf-8.
 - [ ] **Step 4: 커밋**
 
 ```bash
-git add README.md scripts/release.sh
-git commit -m "docs: README 사용법 교체 + 릴리스 스크립트"
+git add README.md scripts/release.sh LICENSE
+git commit -m "docs: README 사용법 교체 + 릴리스 스크립트 + MIT LICENSE"
 ```
 
 ---
