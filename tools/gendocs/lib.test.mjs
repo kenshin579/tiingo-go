@@ -256,3 +256,11 @@ test('renderBlocks keeps h4-h6 depth (capped at 6)', () => {
   ]);
   assert.strictEqual(md, '## 2.8.6 FAQ\n\n#### Do you use XBRL?\n\nYes.\n\n###### deep\n');
 });
+
+test('redactToken also covers the authToken quoted field (websocket connecting example)', () => {
+  assert.strictEqual(
+    redactToken("'authToken': 'Not logged-in or registered. Please login or register to see your API Token',"),
+    "'authToken': '<TOKEN>',",
+  );
+  assert.strictEqual(redactToken('"authToken": "0123456789abcdef0123456789abcdef01234567"'), '"authToken": "<TOKEN>"');
+});

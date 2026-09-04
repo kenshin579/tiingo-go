@@ -33,13 +33,13 @@ export function buildNav(links) {
 const TOKEN_VALUE = `(?:Not logged-in[^"'\\n&]*|[A-Za-z0-9]{20,})`;
 
 // redactToken: 예시 코드의 토큰 값을 <TOKEN> 으로. 쿼리 `token=…`, 헤더 `Authorization: Token …`,
-// 따옴표 필드 `"token"|"authorization": "…"`('…' 도) 세 형태를 대소문자 무시로 치환한다.
+// 따옴표 필드 `"…token"|"authorization": "…"`('…' 도, `authToken` 포함) 세 형태를 대소문자 무시로 치환한다.
 // 원문 표기(token=/Token /따옴표)는 캡처로 보존한다.
 export function redactToken(text) {
   return String(text)
     .replace(new RegExp(`(token=)${TOKEN_VALUE}`, 'gi'), '$1<TOKEN>')
     .replace(new RegExp(`(token[ \\t]+)${TOKEN_VALUE}`, 'gi'), '$1<TOKEN>')
-    .replace(new RegExp(`(["'](?:token|authorization)["']\\s*:\\s*)(["'])${TOKEN_VALUE}\\2`, 'gi'), '$1$2<TOKEN>$2');
+    .replace(new RegExp(`(["'](?:[a-z_]*token|authorization)["']\\s*:\\s*)(["'])${TOKEN_VALUE}\\2`, 'gi'), '$1$2<TOKEN>$2');
 }
 
 // escapeCell: md 표 셀용 — 앞뒤 공백 제거, '|' 이스케이프, 줄바꿈(연속 포함) → <br>
