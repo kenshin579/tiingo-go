@@ -1,0 +1,14 @@
+{
+  "name": "tiingo-gendocs",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Tiingo API docs → markdown catalog generator",
+  "scripts": {
+    "gen": "node gendocs.mjs",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
