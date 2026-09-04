@@ -1103,6 +1103,8 @@ git add docs/api
 git commit -m "docs: Tiingo 문서 23페이지 md 카탈로그 생성 (tools/gendocs)"
 ```
 
+**구현 시 확인된 사항(승인)**: Step 2 의 `grep "Not logged-in"` 이 `general/connecting.md` 의 WebSocket Python 예시(`'authToken': 'Not logged-in…'`)를 잡음 → `redactToken` 따옴표 필드 키를 `(?:[a-z_]*token|authorization)` 로 확장(테스트 1개 추가, `# pass 23`, 커밋 `fix(gendocs): redactToken 이 authToken 따옴표 필드도 가리도록`). 전체 크롤에서 `dropped` 경고는 Equity Realtime/BOATS 4페이지의 `<span> BETA` 배지뿐. 사이트 원문 그대로인 특이점: `connecting.md` 의 빈 `## 1.2 Connecting` 섹션, `changelog.md` 의 날짜 `##` 바로 아래 `###`, `symbology.md` 의 `{SYMBOL}-{SHARE CLASS}` 템플릿이 `isJson` 휴리스틱으로 ```` ```json ```` 라벨(코스메틱).
+
 ---
 
 ### Task 8: `scripts/fetch-docs.sh` + llms 원본 보관
@@ -1255,7 +1257,7 @@ git commit -m "docs: Tiingo 공식 llms.txt/llms-full.txt 보관 + fetch-docs.sh
 
 ```bash
 cd /Users/user/src/workspace_moneyflow/tiingo-go
-(cd tools/gendocs && npm test)                                    # pass 22, fail 0
+(cd tools/gendocs && npm test)                                    # pass 23, fail 0
 find docs/api -name '*.md' -not -name README.md | wc -l          # 23
 test ! -s tools/gendocs/failures.log && echo "no failures"
 grep -rE "Not logged-in|token=[A-Za-z0-9]{20,}" docs/api || echo "no token leak"
@@ -1278,7 +1280,7 @@ gh pr create --title "docs: Tiingo API 문서 카탈로그 (웹 23페이지 md +
 - Go 코드 없음(`go.mod` 는 SDK 스펙에서)
 
 ## Test plan
-- [x] `cd tools/gendocs && npm test` — 22 pass
+- [x] `cd tools/gendocs && npm test` — 23 pass
 - [x] `npm run gen` — 23 ok / 0 failed, `docs/api/README.md` 링크 23개 = 파일 23개
 - [x] `grep` 으로 토큰·로그인 문구 유출 없음
 - [x] `./scripts/fetch-docs.sh` 2회 실행 — 2회째 "변경 없음", README 원본 표 보존
