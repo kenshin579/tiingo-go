@@ -19,6 +19,8 @@ func TestDate_UnmarshalJSON(t *testing.T) {
 		{"RFC3339 오프셋", `"2019-01-02T00:00:00+00:00"`, time.Date(2019, 1, 2, 0, 0, 0, 0, time.UTC)},
 		{"날짜만", `"1980-12-12"`, time.Date(1980, 12, 12, 0, 0, 0, 0, time.UTC)},
 		{"null", `null`, time.Time{}},
+		{"빈 문자열", `""`, time.Time{}},
+		{"RFC3339 음수 오프셋", `"2019-01-02T19:00:00-05:00"`, time.Date(2019, 1, 3, 0, 0, 0, 0, time.UTC)}, // UTC 정규화로 날짜가 하루 밀린다
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -49,4 +51,30 @@ func TestDate_MarshalJSON(t *testing.T) {
 func TestDate_String(t *testing.T) {
 	assert.Equal(t, "2019-01-02", Date{Time: time.Date(2019, 1, 2, 0, 0, 0, 0, time.UTC)}.String())
 	assert.Equal(t, "", Date{}.String())
+}
+
+func TestDate_TextRoundTrip(t *testing.T) {
+	var d Date
+	require.NoError(t, d.UnmarshalText([]byte("1980-12-12")))
+	assert.Equal(t, "1980-12-12", d.String())
+	require.NoError(t, d.UnmarshalText([]byte("2019-01-02T00:00:00.000Z")))
+	b, err := d.MarshalText()
+	require.NoError(t, err)
+	assert.Equal(t, "2019-01-02", string(b))
+
+	m, err := json.Marshal(map[Date]int{d: 1})
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"2019-01-02":1}`, string(m), "map 키도 YYYY-MM-DD 여야 한다")
+
+	assert.Error(t, (&Date{}).UnmarshalText([]byte("2019/01/02")))
+}
+
+func TestDate_StructFields(t *testing.T) {
+	var s struct {
+		A *Date `json:"a"`
+		B Date  `json:"b"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(`{"a":null,"b":"2019-01-02T00:00:00.000Z"}`), &s))
+	assert.Nil(t, s.A, "null 은 nil 포인터")
+	assert.Equal(t, "2019-01-02", s.B.String())
 }
