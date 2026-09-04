@@ -986,9 +986,11 @@ git commit -m "feat(gendocs): 페이지 추출(탭·표·예시) + 렌더·쓰�
 **Files:**
 - Create: `docs/api/README.md`, `docs/api/{general,rest,websockets,utilities,appendix}/*.md` (23개)
 
-- [ ] **Step 0: 탭 안 헤딩 단계 수정 (Task 6 에서 확인된 사이트 사실 반영)** — `websockets/iex` 등에서 h3 가 탭 본문 안에 있어 탭 헤딩(`###`)과 같은 단계로 렌더됨. `renderBlocks` 에 세 번째 인자 `headingFloor`(기본 2)를 추가해 탭 안 헤딩은 탭 헤딩보다 한 단계 아래(최대 6)로 내린다.
+- [ ] **Step 0: Task 6 코드 리뷰 반영 + 탭 안 헤딩 단계 수정** (한 커밋)
 
-`tools/gendocs/lib.test.mjs` 끝에 추가(먼저 실패 확인):
+리뷰 지적: (a) `walk` 가 `h1~h3` 만 수집해 `h4` 가 조용히 버려짐 — `rest/fundamentals` 2.8.6 FAQ 질문 7개 소실 확인. (b) 탭 본문 안 h3 가 탭 헤딩과 같은 단계로 렌더. (c) 버려진 요소에 대한 관측성 없음. (d) `ONLY`/`LIMIT` 부분 실행이 `failures.log` 를 덮어씀. (e) `document.title` 이 비면 제목 폴백 없음. (f) `NOT_LOGGED_IN` 정확 일치 대신 `startsWith`.
+
+`lib.test.mjs` 끝에 추가(먼저 실패 확인):
 
 ```js
 test('renderBlocks renders headings inside a tab one level below the tab heading', () => {
@@ -1003,13 +1005,23 @@ test('renderBlocks renders headings inside a tab one level below the tab heading
   ]);
   assert.match(md, /### Response\n\ntop-level fields\n\n#### Reference Price Update Messages\n\nupdate fields\n\n## 3\.4\.3 Next/);
 });
+
+test('renderBlocks keeps h4-h6 depth (capped at 6)', () => {
+  const md = renderBlocks([
+    { type: 'heading', level: 2, text: '2.8.6 FAQ' },
+    { type: 'heading', level: 4, text: 'Do you use XBRL?' },
+    { type: 'para', md: 'Yes.' },
+    { type: 'heading', level: 6, text: 'deep' },
+  ]);
+  assert.strictEqual(md, '## 2.8.6 FAQ\n\n#### Do you use XBRL?\n\nYes.\n\n###### deep\n');
+});
 ```
 
-`tools/gendocs/lib.mjs` 의 `renderBlocks` 시그니처·heading·tabs 분기를 아래로:
+`lib.mjs` `renderBlocks`:
 
 ```js
-// renderBlocks: 블록 배열 → md. level 은 현재 섹션 헤딩 깊이(기본 2). h1/h2 → ##, h3 → ###.
-// headingFloor 는 헤딩의 최소 깊이 — 탭 본문 안에서는 탭 헤딩+1 로 내려 계층을 유지한다(최대 6).
+// renderBlocks: 블록 배열 → md. level 은 현재 섹션 헤딩 깊이(기본 2). h1/h2 → ##, h3~h6 → 같은 깊이(최대 6).
+// headingFloor 는 헤딩의 최소 깊이 — 탭 본문 안에서는 탭 헤딩+1 로 내려 계층을 유지한다.
 // 탭 헤딩은 현재 섹션보다 한 단계 아래(최대 5).
 export function renderBlocks(blocks, level = 2, headingFloor = 2) {
   const out = [];
@@ -1018,7 +1030,7 @@ export function renderBlocks(blocks, level = 2, headingFloor = 2) {
     switch (b.type) {
       case 'heading':
         if (!b.text || !b.text.trim()) break;
-        cur = Math.min(Math.max(b.level <= 2 ? 2 : 3, headingFloor), 6);
+        cur = Math.min(Math.max(b.level <= 2 ? 2 : b.level, headingFloor), 6);
         out.push(`${'#'.repeat(cur)} ${b.text.trim()}`, '');
         break;
       // ... para / list / code / table 분기는 그대로 ...
@@ -1034,11 +1046,15 @@ export function renderBlocks(blocks, level = 2, headingFloor = 2) {
       }
 ```
 
-`npm test` → `# pass 21`, `# fail 0` (기존 `level 3 → #### Request` 테스트도 그대로 통과).
+`gendocs.mjs`:
+- `extractPage`: 헤딩 정규식 `/^h[1-6]$/`, `BLOCK_TAGS` 에 `h5`, `h6` 추가. `dropped` 배열을 두고 `walk` 의 마지막 분기(자식 없음)에서 텍스트가 있으면 `dropped.push(`<${tag}> ${clean(el.innerText).slice(0, 60)}`)`, `tabs` 에서 라벨이 0개면 `dropped.push('<mat-tab-group> 라벨 없음')`. 반환 `{ title, blocks, dropped }`. `NOT_LOGGED_IN` 비교는 `text.trim().startsWith('Not logged-in')`. 캔버스 셀렉터는 상수 `CANVAS = 'tiingo-api-canvas'` 로 빼서 `page.evaluate(fn, CANVAS)` 인자와 `waitForSelector(CANVAS)` 양쪽에 사용.
+- `main`: `r.dropped.length` 면 `console.warn(`  WARN ${t.href}: dropped ${n} — ${list.join(' | ')}`)`. `renderPage({ title: result.title || t.title, ... })`. `failures.log` 는 `ONLY`/`LIMIT` 가 없을 때만 다시 쓴다(전체/RETRY 실행 결과만 기록).
+
+`npm test` → `# pass 22`, `# fail 0`. `ONLY=fundamentals npm run gen` 후 `grep -c '^#### ' docs/api/rest/fundamentals.md` = 7 이상(FAQ 질문), `ONLY=iex` 후 `websockets/iex.md` 에 `#### Reference Price Update Messages`.
 
 ```bash
-git add tools/gendocs/lib.mjs tools/gendocs/lib.test.mjs
-git commit -m "fix(gendocs): 탭 본문 안 헤딩을 탭 헤딩보다 한 단계 아래로 렌더"
+git add tools/gendocs/lib.mjs tools/gendocs/lib.test.mjs tools/gendocs/gendocs.mjs
+git commit -m "fix(gendocs): h4~h6 헤딩 수집·계층 렌더, 탭 안 헤딩 단계, 드롭 요소 경고, 제목 폴백 (Task 6 리뷰 반영)"
 ```
 
 - [ ] **Step 1: 전체 실행**
@@ -1072,8 +1088,8 @@ Expected: `index OK` (링크 23개 = 파일 23개, 차이 없음). `/tmp` 대신
 Run: `sed -n '1,60p' docs/api/rest/fundamentals.md`
 Expected: `2.8.5 Meta Data` 섹션의 `### Response` 표에 `permaTicker` … `dailyLastUpdated` 16행과 타입(`datetime`, `int32`, `boolean`)이 있다. `2.8.6 Additional Information & FAQ` 섹션이 있다.
 
-Run: `grep -c '^#' docs/api/general/changelog.md docs/api/appendix/symbology.md`
-Expected: 각각 1 이상(빈 페이지 아님).
+Run: `grep -c '^#' docs/api/general/changelog.md docs/api/appendix/symbology.md; grep -c '^#### ' docs/api/rest/fundamentals.md`
+Expected: 앞 둘은 각각 1 이상(빈 페이지 아님), fundamentals 는 7 이상(FAQ h4).
 
 - [ ] **Step 5: 멱등 확인**
 
@@ -1239,7 +1255,7 @@ git commit -m "docs: Tiingo 공식 llms.txt/llms-full.txt 보관 + fetch-docs.sh
 
 ```bash
 cd /Users/user/src/workspace_moneyflow/tiingo-go
-(cd tools/gendocs && npm test)                                    # pass 21, fail 0
+(cd tools/gendocs && npm test)                                    # pass 22, fail 0
 find docs/api -name '*.md' -not -name README.md | wc -l          # 23
 test ! -s tools/gendocs/failures.log && echo "no failures"
 grep -rE "Not logged-in|token=[A-Za-z0-9]{20,}" docs/api || echo "no token leak"
@@ -1262,7 +1278,7 @@ gh pr create --title "docs: Tiingo API 문서 카탈로그 (웹 23페이지 md +
 - Go 코드 없음(`go.mod` 는 SDK 스펙에서)
 
 ## Test plan
-- [x] `cd tools/gendocs && npm test` — 21 pass
+- [x] `cd tools/gendocs && npm test` — 22 pass
 - [x] `npm run gen` — 23 ok / 0 failed, `docs/api/README.md` 링크 23개 = 파일 23개
 - [x] `grep` 으로 토큰·로그인 문구 유출 없음
 - [x] `./scripts/fetch-docs.sh` 2회 실행 — 2회째 "변경 없음", README 원본 표 보존
