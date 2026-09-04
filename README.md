@@ -33,9 +33,13 @@ ps, _ := c.EOD.HistoricalPrices(ctx, "AAPL", &eod.PriceOptions{
     ResampleFreq: eod.ResampleWeekly,
     Sort:         "-date",
 })
+
+// 재무제표(최신 기간부터). 지표는 코드로 조회한다 — 신규 지표가 계속 추가되기 때문
+ss, _ := c.Fundamentals.Statements(ctx, "AAPL", &fundamentals.StatementOptions{Sort: "-date"})
+rev, ok := ss[0].StatementData.Get(fundamentals.CodeRevenue)
 ```
 
-실행 가능한 예시: [`examples/eod`](examples/eod).
+실행 가능한 예시: [`examples/eod`](examples/eod), [`examples/fundamentals`](examples/fundamentals).
 
 ## 인증
 
@@ -50,8 +54,15 @@ ps, _ := c.EOD.HistoricalPrices(ctx, "AAPL", &eod.PriceOptions{
 | End-of-Day | `EOD.Meta` | `GET /tiingo/daily/<ticker>` |
 | End-of-Day | `EOD.LatestPrice` | `GET /tiingo/daily/<ticker>/prices` |
 | End-of-Day | `EOD.HistoricalPrices` | `GET /tiingo/daily/<ticker>/prices` |
+| Fundamentals\* | `Fundamentals.Definitions` | `GET /tiingo/fundamentals/definitions` |
+| Fundamentals\* | `Fundamentals.Meta` | `GET /tiingo/fundamentals/meta` |
+| Fundamentals\* | `Fundamentals.Statements` | `GET /tiingo/fundamentals/<ticker>/statements` |
+| Fundamentals\* | `Fundamentals.Daily` | `GET /tiingo/fundamentals/<ticker>/daily` |
 
-나머지 REST 그룹(News, Fundamentals, Crypto, Forex, IEX, BOATS 등)과 WebSocket 은 순차 추가 예정.
+\* Fundamentals 는 별도 구독(add-on)이다. 무료 플랜은 Dow 30 종목의 3년치만 제공하며, 권한 밖
+종목은 `APIError`(400/403)로 돌아온다.
+
+나머지 REST 그룹(News, Crypto, Forex, IEX, BOATS 등)과 WebSocket 은 순차 추가 예정.
 
 ## 날짜 타입
 
@@ -59,6 +70,9 @@ Tiingo 는 같은 API 에서 두 가지 날짜 형식을 쓴다 — 가격은 `2
 메타는 `1980-12-12`. `tiingo.Date`(= `types.Date`)가 둘 다 받아 `time.Time` 으로 정규화하고
 `YYYY-MM-DD` 로 직렬화한다. `time.Time` 을 임베드하므로 `IsZero()`, `Before()`, `Year()` 등을
 그대로 쓸 수 있다. 다만 `database/sql` 에 직접 넘길 때는 `d.Time` 을 쓴다.
+
+`types.Time`(루트 별칭 `tiingo.Time`)은 시각까지 보존한다. `statementLastUpdated` 처럼 갱신
+시각이 의미 있는 필드에 쓰며, 직렬화는 RFC3339 다.
 
 ## 에러 처리
 
