@@ -10,8 +10,8 @@ Tiingo 가 공식 제공하는 llms 원본 2개를 보관합니다. `tiingo-go` 
 
 | 파일 | 출처 | Last updated | 가져온 날짜 |
 | --- | --- | --- | --- |
-| `llms.txt` | https://www.tiingo.com/llms.txt | - | - |
-| `llms-full.txt` | https://www.tiingo.com/llms-full.txt | - | - |
+| `llms.txt` | https://www.tiingo.com/llms.txt | 2026-08-18 | 2026-09-04 |
+| `llms-full.txt` | https://www.tiingo.com/llms-full.txt | 2026-08-18 | 2026-09-04 |
 
 ## 재생성
 

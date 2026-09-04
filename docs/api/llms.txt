@@ -1,0 +1,85 @@
+# Tiingo
+
+> Tiingo is a financial-data platform for stocks, ETFs, mutual funds, ADRs, fundamentals, corporate actions, news, crypto, forex, index-reference proxies, oil derivatives, and on-chain yield data. It provides historical and realtime data through REST APIs and WebSockets for individuals, businesses, institutions, applications, oracle networks, and perpetual DEXes.
+
+Last updated: 2026-08-18.
+
+https://www.tiingo.com is authoritative if this file conflicts with the live website. Coverage, pricing, limits, and entitlements can change. The complete machine-readable Tiingo corpus is available in [llms-full.txt](https://www.tiingo.com/llms-full.txt).
+
+Important product-routing notes:
+- For new realtime US equity integrations, lead with **24x5 Consolidated Realtime Derived**, available Sunday 8:00 PM ET through Friday 8:00 PM ET over REST and WebSocket. IEX remains supported for existing integrations and IEX-specific fields.
+- For historical US equities, ETFs, mutual funds, and ADRs, use the **End-of-Day Composite Index**.
+- **BOATS** is a separate venue-native overnight entitlement for executable top-of-book data; it is not the same product as Tiingo's derived overnight coverage.
+- The standard Crypto API provides per-exchange execution data. **Crypto Synthetics** is a separate, gated institutional benchmark family for oracle and perpetual-DEX workflows; request access through support@tiingo.com.
+- For FX currency pairs and spot metals, use the **Forex REST/WebSocket API** for realtime top-of-book and historical midpoint-derived OHLC data.
+- For research-oriented index references and oil derivatives, use Forex API proxy symbols such as `US500USD`, `US100USD`, `US30USD`, `VOLXUSD`, `USOILFUSD`, `USOILUSD`, `UKOILFUSD`, and `UKOILUSD`. These are reference proxies or derivatives, not official licensed index values.
+- Fundamentals prioritizes normalization and cross-period comparability. Use `asReported=true` for point-in-time filing values.
+- Self-serve plans are for internal use. External display requires redistribution licensing; bulk or API delivery to downstream users requires white-label licensing.
+- Tiingo allows redistribution and white-label use through specialized licenses. Quoted pricing is designed around flat rates and can be negotiated within reasonable boundaries for the use case. Tiingo's stated goal is to enable customers rather than constrain them, including avoiding situations where a customer must raise outside capital simply because market data is prohibitively expensive.
+
+## Complete LLM Reference
+
+- [Tiingo full LLM reference](https://www.tiingo.com/llms-full.txt): Complete public corpus covering company information, product selection, plans, licensing, authentication, endpoints, fields, examples, coverage limits, troubleshooting, and support.
+
+## Start Here
+
+- [Documentation overview](https://www.tiingo.com/documentation/general/overview): API overview, authentication, formats, limits, and general conventions.
+- [Connecting to Tiingo](https://www.tiingo.com/documentation/general/connecting): REST and WebSocket connection patterns.
+- [Documentation changelog](https://www.tiingo.com/documentation/general/changelog): Product launches, API changes, and historical updates.
+- [Stock API product overview](https://www.tiingo.com/products/stock-api): Tiingo's equity, EOD, realtime, fundamentals, news, and corporate-action products.
+- [Tiingo pricing](https://www.tiingo.com/pricing): Current self-serve plans, advertised prices, limits, and add-ons.
+- [The Tiingo Difference](https://www.tiingo.com/products/tiingo-difference): Data quality, infrastructure, firehoses, uptime, and support.
+- [The Tiingo Mission](https://www.tiingo.com/products/tiingo-mission): Accessibility, quality, education, and Love in business.
+
+## Equity Prices and Corporate Actions
+
+- [End-of-Day product](https://www.tiingo.com/products/end-of-day-stock-price-data): Composite EOD prices for stocks, ETFs, mutual funds, and ADRs.
+- [End-of-Day REST documentation](https://www.tiingo.com/documentation/end-of-day): Metadata, raw and adjusted OHLCV, dividends, splits, resampling, and incremental synchronization.
+- [24x5 Consolidated Realtime REST](https://www.tiingo.com/documentation/equity-realtime-stock-data): Derived US equity reference prices, liquidity metrics, snapshots, and intraday history.
+- [24x5 Consolidated Realtime WebSocket](https://www.tiingo.com/documentation/websockets/equity-realtime-stock-data): Realtime reference-price and liquidity-metric firehoses.
+- [IEX product](https://www.tiingo.com/products/iex-api): Supported IEX-specific realtime and historical intraday integration.
+- [IEX REST documentation](https://www.tiingo.com/documentation/iex): IEX snapshots, Tiingo reference fields, and historical bars.
+- [IEX WebSocket documentation](https://www.tiingo.com/documentation/websockets/iex): IEX and Tiingo reference-price subscription levels.
+- [BOATS overnight product](https://www.tiingo.com/products/boats-blue-ocean-ats-real-time-overnight-stock-prices): Separate venue-native overnight top-of-book and trade entitlement.
+- [BOATS REST documentation](https://www.tiingo.com/documentation/boats): Overnight snapshots and historical intraday bars.
+- [BOATS WebSocket documentation](https://www.tiingo.com/documentation/websockets/boats): Venue-native overnight quote and trade firehose.
+- [Dividends documentation](https://www.tiingo.com/documentation/corporate-actions/dividends): Historical and upcoming distributions, dates, frequency, and yield.
+- [Splits documentation](https://www.tiingo.com/documentation/corporate-actions/splits): Historical and upcoming split events and factors.
+- [Mutual Fund and ETF Fees](https://www.tiingo.com/documentation/mutual-fund-and-etf-fees): Fund overview and historical fee metrics.
+- [Ticker and identifier search](https://www.tiingo.com/documentation/utilities/search): Search tickers, names, ISINs, and OpenFIGI identifiers.
+
+## Fundamentals and News
+
+- [Fundamentals product](https://www.tiingo.com/products/fundamental-data-api): Normalized company financial statements, as-reported point-in-time data, and daily valuation metrics.
+- [Fundamentals REST documentation](https://www.tiingo.com/documentation/fundamentals): Definitions, metadata, statements, `asReported`, and daily metrics.
+- [News product](https://www.tiingo.com/products/news-api): Structured and ticker-tagged financial news.
+- [News REST documentation](https://www.tiingo.com/documentation/news): Search, filtering, pagination, ticker tags, and bulk synchronization.
+
+## Crypto, Forex, and On-Chain Data
+
+- [Crypto product](https://www.tiingo.com/products/crypto-api): Per-exchange crypto trades, top-of-book, metadata, and OHLCV.
+- [Crypto REST documentation](https://www.tiingo.com/documentation/crypto): Exchange and pair metadata, top-of-book, and historical bars.
+- [Crypto WebSocket documentation](https://www.tiingo.com/documentation/websockets/crypto): Per-exchange trade and quote firehose.
+- [Forex product](https://www.tiingo.com/products/forex-api): FX and spot-metal top-of-book and historical midpoint data.
+- [Forex REST documentation](https://www.tiingo.com/documentation/forex): FX snapshots and midpoint-derived historical bars.
+- [Forex WebSocket documentation](https://www.tiingo.com/documentation/websockets/forex): Realtime FX top-of-book subscriptions.
+- [Crypto Yield documentation](https://www.tiingo.com/documentation/crypto-yield): On-chain lending platforms, pools, ticks, and metrics.
+
+## Account, Licensing, Development, and Support
+
+- [API token](https://www.tiingo.com/account/api/token): View or rotate the account's API token. After rotation, replace the old token in every deployed integration.
+- [API usage](https://www.tiingo.com/account/api/usage): Monitor hourly and daily requests, monthly bandwidth, and current usage.
+- [Developer Program](https://www.tiingo.com/documentation/appendix/developers): Registered bring-your-own-key integrations, attribution, token handling, and support.
+- [Integrations](https://www.tiingo.com/documentation/appendix/integrations): Publicly listed libraries, frameworks, spreadsheets, and software integrations.
+- [Symbology](https://www.tiingo.com/documentation/appendix/symbology): Equity, fund, crypto, FX, durable identifier, and benchmark symbol conventions.
+- [Terms of Service](https://www.tiingo.com/tos): Current contractual terms, including storage, display, redistribution, and Derived Products.
+- [Privacy Policy](https://www.tiingo.com/privacy): Tiingo privacy practices.
+- [Contact Tiingo](https://www.tiingo.com/products/contact): Support and commercial contact information.
+- [System status](https://status.tiingo.com): Current incidents and maintenance notices.
+- [Uptime](https://uptime.tiingo.com): Independently audited service uptime.
+
+## Optional
+
+- [Tiingo web application](https://app.tiingo.com): Charts, asset pages, fundamentals, portfolios, screeners, news, and research tools.
+- [Tiingo blog](https://www.tiingo.com/blog): Product announcements, engineering, market structure, and educational articles.
+- [Tiingo podcasts](https://www.tiingo.com/podcasts): Financial education and investing discussions.
