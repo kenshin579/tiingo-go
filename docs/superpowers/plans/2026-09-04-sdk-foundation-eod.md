@@ -11,6 +11,8 @@
 **Spec:** `docs/superpowers/specs/2026-09-04-sdk-foundation-eod-design.md`
 **API 참조:** `docs/api/rest/end-of-day.md`, `docs/api/general/{overview,connecting}.md`
 
+**실행 환경(2026-09-04 확인)**: `TIINGO_API_KEY` 가 이 머신에 설정돼 있지 않다. 따라서 Task 5·6 의 fixture 는 카탈로그 문서의 예시 JSON 으로 만들고, Task 7 의 integration 테스트는 SKIP 된다(코드는 작성하되 실행은 키 확보 후). 메타 응답의 추가 필드(`permaTicker` 등) 확인도 키 확보 후로 미룬다 — 구조체는 문서 표의 6필드로 시작한다. 설치된 toolchain 은 Go 1.26.4 이지만 `go.mod` 는 fmp-go 와 맞춰 `go 1.25` 로 둔다.
+
 ---
 
 ## 파일 구조
