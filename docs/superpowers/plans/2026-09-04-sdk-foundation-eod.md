@@ -715,6 +715,22 @@ git commit -m "feat: tiingo.Client 진입점, 옵션, 환경변수 생성자"
 
 ---
 
+### Task 4.5: httpclient 리뷰 반영 (Task 3 코드 리뷰)
+
+**Files:** Modify `internal/httpclient/client.go`, `internal/httpclient/client_test.go`
+
+1. (Important) `BaseURL` 끝에 `/` 가 있으면 `url.Parse(baseURL+path)` 가 `//tiingo/daily/aapl` 를 만들어 404 가 나는데 원인이 에러에 드러나지 않는다(`WithBaseURL("https://api.tiingo.com/")` 는 가장 자연스러운 사용법). `New` 에서 `base = strings.TrimSuffix(base, "/")`.
+2. (Minor) `TestGetJSON_컨텍스트_취소` 는 실제로는 `http.Client.Timeout` 을 검증한다 → `TestGetJSON_타임아웃` 으로 개명하고, `context.WithTimeout` 으로 취소를 검증하는 테스트를 따로 추가(`errors.Is(err, context.DeadlineExceeded)` 가 참임을 리뷰어가 실측 확인).
+3. (Minor) 429 행을 에러 매핑 테이블 테스트에 추가(스펙이 429 를 명시하므로 계약 고정).
+
+리뷰어가 실측으로 닫은 항목(수정 불필요): `GetRaw` 의 `Accept: application/json`(CSV 는 쿼리로 결정, v1 미지원), 객체가 아닌 JSON 에러 바디(Tiingo 는 DRF 형태 객체만), HTML 에러 페이지(디코딩 실패로 `Message` 에 안 들어감 → 길이 제한 불필요), 200+에러 바디 검사(FMP 와 달리 Tiingo 는 해당 없음), `io.ReadAll` 무제한(bulk_download 도입 시 재검토).
+
+```bash
+git commit -m "fix(httpclient): BaseURL 끝 슬래시 정규화, 타임아웃/취소 테스트 분리 (Task 3 리뷰 반영)"
+```
+
+---
+
 ### Task 5: EOD 메타 엔드포인트
 
 **Step 0 (구현 중 발견 — import 순환 해소)**: 루트 `tiingo` 가 `eod` 를 import 하는데 `eod` 가 `Date` 때문에 `tiingo` 를 import 하면 순환이다(`import cycle not allowed` 실측 확인). `Date`/`DateLayout` 을 leaf 패키지 `types/date.go` 로 옮기고, 루트 `types.go` 는 `type Date = types.Date`, `const DateLayout = types.DateLayout` 별칭만 둔다(공개 이름 `tiingo.Date` 유지). `eod` 는 `types` 를 직접 import 해 필드를 `*types.Date` 로 선언한다. 커밋: `refactor: Date 를 types 패키지로 분리하고 루트에서 별칭 재노출 (import 순환 해소)`.
