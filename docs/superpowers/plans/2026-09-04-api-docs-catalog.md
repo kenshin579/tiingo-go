@@ -1234,6 +1234,12 @@ git add scripts/fetch-docs.sh docs/api/llms.txt docs/api/llms-full.txt docs/api/
 git commit -m "docs: Tiingo 공식 llms.txt/llms-full.txt 보관 + fetch-docs.sh"
 ```
 
+- [ ] **Step 6: Task 8 코드 리뷰 반영** — `last_updated` 가 한 줄에 날짜 두 개면 두 줄을 반환해 `sed` 가 `mv` 뒤에 실패(반쯤 갱신). 수정: 두 번째 grep 에 `-m1`, 날짜 추출·검증(`^[0-9]{4}-[0-9]{2}-[0-9]{2}$`)을 **모든 파일에 대해 `mv` 전에** 1차 패스로 수행(하나라도 이상하면 아무것도 반영 안 함), README 행 post-check 는 URL 열 없이 `grep -qE "^\| \`name\` \| [^|]* \| <updated> \| <today> \|"`(테스트 모드 `TIINGO_DOCS_BASE` 허위 경고 제거), `curl --max-time 60 --retry 2`, UA 주석. 로컬 `python3 -m http.server` fixture 로 두 날짜 형식 검증 후 `git checkout -- docs/api/llms*.txt docs/api/README.md` 로 복원.
+
+```bash
+git commit -m "fix(fetch-docs): 날짜 검증을 mv 전에 전부 수행(부분 갱신 방지), 테스트 모드 허위 경고 제거, curl 타임아웃 (Task 8 리뷰 반영)"
+```
+
 ---
 
 ### Task 9: 루트 README + 최종 검증 + PR
