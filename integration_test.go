@@ -10,6 +10,7 @@ import (
 
 	tiingo "github.com/kenshin579/tiingo-go"
 	"github.com/kenshin579/tiingo-go/eod"
+	"github.com/kenshin579/tiingo-go/fundamentals"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -62,4 +63,55 @@ func TestIntegration_UnknownTicker(t *testing.T) {
 	c := newClient(t)
 	_, err := c.EOD.Meta(context.Background(), "NOSUCHTICKERXYZ")
 	assert.Error(t, err)
+}
+
+func TestIntegration_FundamentalsDefinitions(t *testing.T) {
+	c := newClient(t)
+	ds, err := c.Fundamentals.Definitions(context.Background())
+	require.NoError(t, err)
+	assert.NotEmpty(t, ds)
+
+	known := map[string]bool{}
+	for _, code := range fundamentals.AllCodes {
+		known[code] = true
+	}
+	var missing []string
+	for _, d := range ds {
+		if !known[d.DataCode] {
+			missing = append(missing, d.DataCode)
+		}
+	}
+	assert.Emptyf(t, missing, "codes.go 갱신 필요 — 새 dataCode: %v", missing)
+}
+
+func TestIntegration_FundamentalsMeta(t *testing.T) {
+	c := newClient(t)
+	ms, err := c.Fundamentals.Meta(context.Background(), "AAPL")
+	require.NoError(t, err)
+	require.Len(t, ms, 1)
+	assert.Equal(t, "Apple Inc", ms[0].Name)
+	assert.False(t, ms[0].StatementLastUpdated.IsZero())
+}
+
+func TestIntegration_FundamentalsStatements(t *testing.T) {
+	c := newClient(t)
+	ss, err := c.Fundamentals.Statements(context.Background(), "AAPL", &fundamentals.StatementOptions{
+		StartDate: time.Now().AddDate(-1, 0, 0),
+		Sort:      "-date",
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, ss)
+	rev, ok := ss[0].StatementData.Get(fundamentals.CodeRevenue)
+	assert.True(t, ok)
+	assert.Greater(t, rev, 0.0)
+}
+
+func TestIntegration_FundamentalsDaily(t *testing.T) {
+	c := newClient(t)
+	ds, err := c.Fundamentals.Daily(context.Background(), "AAPL", &fundamentals.DailyOptions{
+		StartDate: time.Now().AddDate(0, 0, -14),
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, ds)
+	assert.Greater(t, ds[0].MarketCap, 0.0)
 }
