@@ -977,6 +977,8 @@ git commit -m "feat(gendocs): 페이지 추출(탭·표·예시) + 렌더·쓰�
 
 (생성된 `docs/api/*.md` 는 아직 커밋하지 않는다 — Task 7 에서 전체 생성 후 한 번에.)
 
+**구현 시 확인된 이탈(승인)**: (1) 섹션마다 반복되는 브레드크럼 `div.documentation-breadcrumb-top-header`("2.1 REST - End-of-Day Prices")가 leaf div 규칙에 문단으로 잡혀 `walk` 에서 건너뜀. (2) `clean` 의 NBSP 를 `\u00a0` 로 이스케이프. (3) `general/overview` 1.1.2 의 "Your API Token is:" 아래 맨 `pre` 가 비로그인 안내문 전체라 `token=` 패턴이 아님 → `pre` 텍스트가 안내문과 정확히 같으면 `<TOKEN>` 으로 치환(상수 `NOT_LOGGED_IN`). **확인된 사이트 사실**: `websockets/iex` 의 h3("Reference Price Update Messages", `"eventData" Request Parameters`)는 탭 **안**에 있어 탭 헤딩과 같은 `###` 로 렌더됨 → Task 7 Step 0 에서 `renderBlocks` 가 탭 안 헤딩을 탭 헤딩+1 단계로 내리도록 수정. `general/overview` 1.1.1 의 "You can check them out here:" 뒤 목록은 비로그인 페이지에 렌더되지 않음(사이트 사실, 크롤러 손실 아님).
+
 ---
 
 ### Task 7: 전체 23페이지 생성 + 검증 + 커밋
