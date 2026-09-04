@@ -962,7 +962,7 @@ Run: `cd tools/gendocs && ONLY=overview npm run gen && ONLY=iex npm run gen`
 (`ONLY=iex` 는 `rest/iex.md` 와 `websockets/iex.md` 둘 다 처리한다 — slug 가 같음.)
 Expected:
 - `docs/api/general/overview.md`: `## Endpoints` 없음, 인증·rate limit·포맷 문단과 헤딩이 있음, 빈 헤딩 없음.
-- `docs/api/websockets/iex.md`: `## 3.4.1 Overview`(h1 이지만 `##`), `## 3.4.2 Reference Price (Derived Data Calculation)`, `### Reference Price Update Messages`(h3), 그 아래 탭 헤딩이 `#### Request` / `#### Response` (h3 다음이라 4단계), `wss://api.tiingo.com/iex` 코드블록.
+- `docs/api/websockets/iex.md`: `## 3.4.1 Overview`(h1 이지만 `##`), `## 3.4.2 Reference Price (Derived Data Calculation)`, `### Reference Price Update Messages`(h3), 탭 헤딩 `### Request` / `### Response`, 탭 안의 h3(`Reference Price Update Messages`)는 Task 7 Step 0 이후 `####`, `wss://api.tiingo.com/iex` 코드블록.
 
 - [ ] **Step 5: 단위 테스트 재실행 + 커밋**
 
@@ -985,6 +985,61 @@ git commit -m "feat(gendocs): 페이지 추출(탭·표·예시) + 렌더·쓰�
 
 **Files:**
 - Create: `docs/api/README.md`, `docs/api/{general,rest,websockets,utilities,appendix}/*.md` (23개)
+
+- [ ] **Step 0: 탭 안 헤딩 단계 수정 (Task 6 에서 확인된 사이트 사실 반영)** — `websockets/iex` 등에서 h3 가 탭 본문 안에 있어 탭 헤딩(`###`)과 같은 단계로 렌더됨. `renderBlocks` 에 세 번째 인자 `headingFloor`(기본 2)를 추가해 탭 안 헤딩은 탭 헤딩보다 한 단계 아래(최대 6)로 내린다.
+
+`tools/gendocs/lib.test.mjs` 끝에 추가(먼저 실패 확인):
+
+```js
+test('renderBlocks renders headings inside a tab one level below the tab heading', () => {
+  const md = renderBlocks([
+    { type: 'heading', level: 2, text: '3.4.2 Reference Price' },
+    { type: 'tabs', tabs: [{ name: 'Response', blocks: [
+      { type: 'para', md: 'top-level fields' },
+      { type: 'heading', level: 3, text: 'Reference Price Update Messages' },
+      { type: 'para', md: 'update fields' },
+    ] }] },
+    { type: 'heading', level: 2, text: '3.4.3 Next' },
+  ]);
+  assert.match(md, /### Response\n\ntop-level fields\n\n#### Reference Price Update Messages\n\nupdate fields\n\n## 3\.4\.3 Next/);
+});
+```
+
+`tools/gendocs/lib.mjs` 의 `renderBlocks` 시그니처·heading·tabs 분기를 아래로:
+
+```js
+// renderBlocks: 블록 배열 → md. level 은 현재 섹션 헤딩 깊이(기본 2). h1/h2 → ##, h3 → ###.
+// headingFloor 는 헤딩의 최소 깊이 — 탭 본문 안에서는 탭 헤딩+1 로 내려 계층을 유지한다(최대 6).
+// 탭 헤딩은 현재 섹션보다 한 단계 아래(최대 5).
+export function renderBlocks(blocks, level = 2, headingFloor = 2) {
+  const out = [];
+  let cur = level;
+  for (const b of blocks) {
+    switch (b.type) {
+      case 'heading':
+        if (!b.text || !b.text.trim()) break;
+        cur = Math.min(Math.max(b.level <= 2 ? 2 : 3, headingFloor), 6);
+        out.push(`${'#'.repeat(cur)} ${b.text.trim()}`, '');
+        break;
+      // ... para / list / code / table 분기는 그대로 ...
+      case 'tabs': {
+        const depth = Math.min(cur + 1, 5);
+        const h = '#'.repeat(depth);
+        for (const tab of orderTabs(b.tabs)) {
+          const inner = renderBlocks(tab.blocks, depth, Math.min(depth + 1, 6));
+          if (!inner.trim()) continue;
+          out.push(`${h} ${tab.name}`, '', inner);
+        }
+        break;
+      }
+```
+
+`npm test` → `# pass 21`, `# fail 0` (기존 `level 3 → #### Request` 테스트도 그대로 통과).
+
+```bash
+git add tools/gendocs/lib.mjs tools/gendocs/lib.test.mjs
+git commit -m "fix(gendocs): 탭 본문 안 헤딩을 탭 헤딩보다 한 단계 아래로 렌더"
+```
 
 - [ ] **Step 1: 전체 실행**
 
@@ -1184,7 +1239,7 @@ git commit -m "docs: Tiingo 공식 llms.txt/llms-full.txt 보관 + fetch-docs.sh
 
 ```bash
 cd /Users/user/src/workspace_moneyflow/tiingo-go
-(cd tools/gendocs && npm test)                                    # pass 20, fail 0
+(cd tools/gendocs && npm test)                                    # pass 21, fail 0
 find docs/api -name '*.md' -not -name README.md | wc -l          # 23
 test ! -s tools/gendocs/failures.log && echo "no failures"
 grep -rE "Not logged-in|token=[A-Za-z0-9]{20,}" docs/api || echo "no token leak"
@@ -1207,7 +1262,7 @@ gh pr create --title "docs: Tiingo API 문서 카탈로그 (웹 23페이지 md +
 - Go 코드 없음(`go.mod` 는 SDK 스펙에서)
 
 ## Test plan
-- [x] `cd tools/gendocs && npm test` — 20 pass
+- [x] `cd tools/gendocs && npm test` — 21 pass
 - [x] `npm run gen` — 23 ok / 0 failed, `docs/api/README.md` 링크 23개 = 파일 23개
 - [x] `grep` 으로 토큰·로그인 문구 유출 없음
 - [x] `./scripts/fetch-docs.sh` 2회 실행 — 2회째 "변경 없음", README 원본 표 보존
