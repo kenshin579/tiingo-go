@@ -1103,7 +1103,9 @@ git add docs/api
 git commit -m "docs: Tiingo 문서 23페이지 md 카탈로그 생성 (tools/gendocs)"
 ```
 
-**구현 시 확인된 사항(승인)**: Step 2 의 `grep "Not logged-in"` 이 `general/connecting.md` 의 WebSocket Python 예시(`'authToken': 'Not logged-in…'`)를 잡음 → `redactToken` 따옴표 필드 키를 `(?:[a-z_]*token|authorization)` 로 확장(테스트 1개 추가, `# pass 23`, 커밋 `fix(gendocs): redactToken 이 authToken 따옴표 필드도 가리도록`). 전체 크롤에서 `dropped` 경고는 Equity Realtime/BOATS 4페이지의 `<span> BETA` 배지뿐. 사이트 원문 그대로인 특이점: `connecting.md` 의 빈 `## 1.2 Connecting` 섹션, `changelog.md` 의 날짜 `##` 바로 아래 `###`, `symbology.md` 의 `{SYMBOL}-{SHARE CLASS}` 템플릿이 `isJson` 휴리스틱으로 ```` ```json ```` 라벨(코스메틱).
+**구현 시 확인된 사항(승인)**: Step 2 의 `grep "Not logged-in"` 이 `general/connecting.md` 의 WebSocket Python 예시(`'authToken': 'Not logged-in…'`)를 잡음 → `redactToken` 따옴표 필드 키를 `(?:[a-z_]*token|authorization)` 로 확장(테스트 1개 추가, `# pass 23`, 커밋 `fix(gendocs): redactToken 이 authToken 따옴표 필드도 가리도록`). 전체 크롤에서 `dropped` 경고는 Equity Realtime/BOATS 4페이지의 `<span> BETA` 배지뿐.
+
+**SDK 단계에서 참고할 Tiingo 측 문서 오류(카탈로그는 원문 그대로, 코드 리뷰에서 발견)**: (1) `websockets/forex.md` Response 표의 Ask Size=index 7 / Ask Price=index 6 은 예시 페이로드·다른 WS 페이지(size 6, price 7)와 반대 — 예시를 따를 것. (2) `rest/news.md` bulk download Response "End Date" 의 JSON FIELD 가 `startDate` 로 오기(예시는 `endDate`). (3) `rest/dividends.md` `trailingDiv1Y` 가 `string` 으로 표기되나 예시는 float. (4) 예시 JSON 문법 오류 7곳(`rest/iex.md`, `rest/mutual-fund-and-etf-fees.md`, `rest/fundamentals.md` statementData 여는 중괄호 누락, `websockets/iex.md` 2곳, `websockets/boats.md`, `utilities/search.md`) + 문자열 안 줄바꿈(`rest/end-of-day.md`, `rest/news.md`) — fixture 로 그대로 쓰지 말 것. 코스메틱(후속 가능): 탭 밖 h4 가 `##` 바로 아래 `####`(dividends/fundamentals FAQ), 표 셀 안 링크 소실(`appendix/integrations.md`). 사이트 원문 그대로인 특이점: `connecting.md` 의 빈 `## 1.2 Connecting` 섹션, `changelog.md` 의 날짜 `##` 바로 아래 `###`, `symbology.md` 의 `{SYMBOL}-{SHARE CLASS}` 템플릿이 `isJson` 휴리스틱으로 ```` ```json ```` 라벨(코스메틱).
 
 ---
 
