@@ -133,7 +133,8 @@ Tiingo 는 시간당·일당 요청 수와 월 대역폭으로 제한하며 분/
 ```bash
 go test ./...                                       # 단위 테스트
 TIINGO_API_KEY=... go test -tags integration ./...  # 실호출 통합 테스트
-go build -o /dev/null ./examples/eod                # 예제 빌드(레포 루트의 eod/ 와 이름이 겹쳐 -o 필요)
+go build -o /dev/null ./examples/eod                # 예제 빌드(레포 루트의 동명 디렉터리와 겹치면 -o 필요)
+go build -o /dev/null ./examples/search             # eod/·search/ 가 이에 해당한다
 ```
 
 ## 문서

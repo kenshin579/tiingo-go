@@ -160,9 +160,10 @@ func TestSearch_EscapesQuery(t *testing.T) {
 }
 
 func TestSearch_EmptyQuery(t *testing.T) {
-	c, _ := newStubClient(t, http.StatusOK, `[]`)
+	c, lastReq := newStubClient(t, http.StatusOK, `[]`)
 	_, err := c.Search(context.Background(), "   ", nil)
-	assert.Error(t, err, "왕복하기 전에 막는다")
+	require.Error(t, err)
+	assert.Nil(t, lastReq(), "왕복하기 전에 막는다 — 요청이 나가지 않았다")
 }
 
 // 일치하는 자산이 없으면 200 + [] 다. 에러가 아니다.
@@ -214,8 +215,9 @@ func TestSearchByISIN_Options(t *testing.T) {
 
 // 에러 메시지가 어느 인자인지 가리키는지 고정한다 — searchBy 의 key 가 인자 이름 노릇을 한다.
 func TestSearchByISIN_EmptyISIN(t *testing.T) {
-	c, _ := newStubClient(t, http.StatusOK, `[]`)
+	c, lastReq := newStubClient(t, http.StatusOK, `[]`)
 	_, err := c.SearchByISIN(context.Background(), " ", nil)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "isin")
+	assert.Nil(t, lastReq(), "왕복하기 전에 막는다")
 }

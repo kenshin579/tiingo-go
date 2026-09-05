@@ -152,7 +152,7 @@ type SearchOptions struct {
 ## 테스트
 
 - **fixture 4종**(실호출): `search_apple.json`(10건, AAPL 중복·`openFIGIComposite` null 포함),
-  `search_msft.json`(**`"nan"` 이 들어간 MSFX 포함** — 정규화 테스트용), `search_isin.json`(1건),
+  `search_microsoft.json`(**`"nan"` 이 들어간 MSFX 포함** — 정규화 테스트용), `search_isin.json`(1건),
   `search_columns.json`(`columns=ticker,name` — 필드 누락 시 zero 값 확인).
 - **단위 테스트**: 두 메서드의 파싱, **`FIGI` 정규화**(null → `""`, `"nan"` → `""`, 정상 값은 그대로),
   티커 중복이 그대로 유지되는지(SDK 가 임의로 합치지 않음), 쿼리 생성(zero 값 생략, true 일 때만,

@@ -13,6 +13,11 @@ func TestNewClient(t *testing.T) {
 	c, err := NewClient("key")
 	require.NoError(t, err)
 	assert.NotNil(t, c.EOD)
+	assert.NotNil(t, c.Fundamentals)
+	assert.NotNil(t, c.Crypto)
+	assert.NotNil(t, c.Forex)
+	assert.NotNil(t, c.IEX)
+	assert.NotNil(t, c.Search)
 
 	_, err = NewClient("")
 	assert.Error(t, err, "빈 키는 에러")
@@ -33,10 +38,4 @@ func TestNewClientFromEnv(t *testing.T) {
 	require.NoError(t, os.Unsetenv("TIINGO_API_KEY"))
 	_, err = NewClientFromEnv()
 	assert.Error(t, err, "환경변수 없으면 에러")
-}
-
-func TestNewClient_WiresSearch(t *testing.T) {
-	c, err := NewClient("k")
-	require.NoError(t, err)
-	assert.NotNil(t, c.Search)
 }
