@@ -1,0 +1,92 @@
+[
+    {
+        "name": "Apple Inc",
+        "ticker": "AAPL",
+        "permaTicker": "CA000000137372",
+        "openFIGIComposite": null,
+        "assetType": "Stock",
+        "isActive": true,
+        "countryCode": "CA"
+    },
+    {
+        "name": "Apple Inc",
+        "ticker": "AAPL",
+        "permaTicker": "US000000000038",
+        "openFIGIComposite": "BBG000B9XRY4",
+        "assetType": "Stock",
+        "isActive": true,
+        "countryCode": "US"
+    },
+    {
+        "name": "Pineapple Inc",
+        "ticker": "PNPL",
+        "permaTicker": "US000000047877",
+        "openFIGIComposite": "BBG000D05J52",
+        "assetType": "Stock",
+        "isActive": true,
+        "countryCode": "US"
+    },
+    {
+        "name": "Pineapple Financ",
+        "ticker": "PAPLF",
+        "permaTicker": "US000000122458",
+        "openFIGIComposite": null,
+        "assetType": "Stock",
+        "isActive": true,
+        "countryCode": "US"
+    },
+    {
+        "name": "Pineapple Financ",
+        "ticker": "PAPLD",
+        "permaTicker": "US000000132097",
+        "openFIGIComposite": null,
+        "assetType": "Stock",
+        "isActive": true,
+        "countryCode": "US"
+    },
+    {
+        "name": "Apple Rush Company Inc",
+        "ticker": "APRU",
+        "permaTicker": "US000000057387",
+        "openFIGIComposite": "BBG000TKJLW1",
+        "assetType": "Stock",
+        "isActive": true,
+        "countryCode": "US"
+    },
+    {
+        "name": "Apple iSports Group Inc",
+        "ticker": "AAPI",
+        "permaTicker": "US000000074107",
+        "openFIGIComposite": "BBG000CQN9X7",
+        "assetType": "Stock",
+        "isActive": true,
+        "countryCode": "US"
+    },
+    {
+        "name": "Pineapple Financial Inc",
+        "ticker": "PAPL",
+        "permaTicker": "US000000107731",
+        "openFIGIComposite": "BBG011PMTCN7",
+        "assetType": "Stock",
+        "isActive": true,
+        "countryCode": "US"
+    },
+    {
+        "name": "Golden Apple Oil & Gas Inc",
+        "ticker": "GAPJ",
+        "permaTicker": "US000000059924",
+        "openFIGIComposite": "BBG000C1TL32",
+        "assetType": "Stock",
+        "isActive": true,
+        "countryCode": "US"
+    },
+    {
+        "name": "Apple Hospitality REIT Inc",
+        "ticker": "APLE",
+        "permaTicker": "US000000011715",
+        "openFIGIComposite": "BBG006473QX9",
+        "assetType": "Stock",
+        "isActive": true,
+        "countryCode": "US"
+    }
+]

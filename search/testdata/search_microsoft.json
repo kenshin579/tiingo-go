@@ -1,0 +1,47 @@
+[
+    {
+        "name": "Microsoft Corporation",
+        "ticker": "ZMSF",
+        "permaTicker": "CA000000141727",
+        "openFIGIComposite": null,
+        "assetType": "Stock",
+        "isActive": true,
+        "countryCode": "CA"
+    },
+    {
+        "name": "Microsoft Corporation",
+        "ticker": "MSFT",
+        "permaTicker": "CA000000137368",
+        "openFIGIComposite": null,
+        "assetType": "Stock",
+        "isActive": true,
+        "countryCode": "CA"
+    },
+    {
+        "name": "Microsoft Corporation",
+        "ticker": "MSFT",
+        "permaTicker": "US000000000042",
+        "openFIGIComposite": "BBG000BPH459",
+        "assetType": "Stock",
+        "isActive": true,
+        "countryCode": "US"
+    },
+    {
+        "name": "Microsoft (MSFT) Yield Shares Purpose ETF",
+        "ticker": "MSFY",
+        "permaTicker": "CA000000141436",
+        "openFIGIComposite": null,
+        "assetType": "ETF",
+        "isActive": true,
+        "countryCode": "CA"
+    },
+    {
+        "name": "T-REX 2X LONG MICROSOFT DAILY TARGET ETF ",
+        "ticker": "MSFX",
+        "permaTicker": "US000000113033",
+        "openFIGIComposite": "nan",
+        "assetType": "ETF",
+        "isActive": true,
+        "countryCode": "US"
+    }
+]

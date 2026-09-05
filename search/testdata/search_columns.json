@@ -1,0 +1,42 @@
+[
+    {
+        "ticker": "AAPL",
+        "name": "Apple Inc"
+    },
+    {
+        "ticker": "AAPL",
+        "name": "Apple Inc"
+    },
+    {
+        "ticker": "PNPL",
+        "name": "Pineapple Inc"
+    },
+    {
+        "ticker": "PAPLF",
+        "name": "Pineapple Financ"
+    },
+    {
+        "ticker": "PAPLD",
+        "name": "Pineapple Financ"
+    },
+    {
+        "ticker": "APRU",
+        "name": "Apple Rush Company Inc"
+    },
+    {
+        "ticker": "AAPI",
+        "name": "Apple iSports Group Inc"
+    },
+    {
+        "ticker": "PAPL",
+        "name": "Pineapple Financial Inc"
+    },
+    {
+        "ticker": "GAPJ",
+        "name": "Golden Apple Oil & Gas Inc"
+    },
+    {
+        "ticker": "APLE",
+        "name": "Apple Hospitality REIT Inc"
+    }
+]
