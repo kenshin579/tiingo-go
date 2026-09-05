@@ -171,6 +171,15 @@ func TestAllSnapshots_NoTickersParam(t *testing.T) {
 	assert.Empty(t, lastReq().URL.RawQuery, "쿼리가 비어야 전 종목이 온다")
 }
 
+// AllSnapshots 도 에러를 그대로 전달한다 — Snapshots 와 대칭을 맞춘다.
+func TestAllSnapshots_APIError(t *testing.T) {
+	c, _ := newStubClient(t, http.StatusTooManyRequests, `{"detail":"Error: You have run over your hourly request allocation."}`)
+	_, err := c.AllSnapshots(context.Background())
+	var apiErr *httpclient.APIError
+	require.True(t, errors.As(err, &apiErr))
+	assert.Equal(t, http.StatusTooManyRequests, apiErr.StatusCode)
+}
+
 func TestSnapshots_APIError(t *testing.T) {
 	c, _ := newStubClient(t, http.StatusNotFound, `{"detail":"Not found."}`)
 	_, err := c.Snapshots(context.Background(), []string{"aapl"})

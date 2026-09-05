@@ -8,8 +8,9 @@ import (
 	"github.com/kenshin579/tiingo-go/types"
 )
 
-// snapshotPath 는 스냅샷 경로다. 끝 슬래시가 필요하다 — 없으면 Tiingo 가 301 을 돌려준다.
-const snapshotPath = "/tiingo/equity/intraday/"
+// intradayPath 는 이 카테고리의 공통 경로다. 스냅샷은 이 경로를 그대로 쓰고,
+// 시세는 뒤에 <ticker>/prices 를 붙인다. 끝 슬래시가 필요하다 — 없으면 Tiingo 가 301 을 돌려준다.
+const intradayPath = "/tiingo/equity/intraday/"
 
 // Snapshot 은 통합 피드 기준가·유동성 스냅샷이다.
 //
@@ -64,7 +65,7 @@ func (c *Client) Snapshots(ctx context.Context, tickers []string) ([]Snapshot, e
 		return nil, err
 	}
 	var ss []Snapshot
-	if err := c.http.GetJSON(ctx, snapshotPath, map[string]string{"tickers": joined}, &ss); err != nil {
+	if err := c.http.GetJSON(ctx, intradayPath, map[string]string{"tickers": joined}, &ss); err != nil {
 		return nil, err
 	}
 	return ss, nil
@@ -79,7 +80,7 @@ func (c *Client) Snapshots(ctx context.Context, tickers []string) ([]Snapshot, e
 // tiingo.WithTimeout 으로 늘린다.
 func (c *Client) AllSnapshots(ctx context.Context) ([]Snapshot, error) {
 	var ss []Snapshot
-	if err := c.http.GetJSON(ctx, snapshotPath, nil, &ss); err != nil {
+	if err := c.http.GetJSON(ctx, intradayPath, nil, &ss); err != nil {
 		return nil, err
 	}
 	return ss, nil
