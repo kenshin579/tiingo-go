@@ -196,8 +196,8 @@ type TopOptions struct {
 - `tickers` 는 콤마로 합쳐 보낸다. 원소가 빈 문자열이면 에러, 슬라이스 자체가 비어도 에러
   (`Prices`/`TopOfBook` 은 필수 파라미터).
 - `Exchanges` 도 콤마 결합. `IncludeRawExchangeData` 는 true 일 때만 전송.
-- `StartDate`/`EndDate` 는 `YYYY-MM-DD` 로 직렬화한다(카탈로그 표는 datetime 이라 하지만 EOD·
-  Fundamentals 와 같은 형식으로 통일 — 실호출로 동작 확인 후 확정).
+- `StartDate`/`EndDate` 는 `YYYY-MM-DD` 로 직렬화한다. 카탈로그 표는 datetime 이라 적지만 실호출로
+  `startDate=2026-09-01&endDate=2026-09-03` 이 200 임을 확인했다(EOD·Fundamentals 와 같은 형식).
 - 옵션 포인터가 nil 이면 필수 `tickers` 만 보낸다.
 
 ## 테스트
@@ -223,8 +223,10 @@ type TopOptions struct {
 
 ## 주의
 
-- `includeRawExchangeData=true` 응답은 아직 실측하지 않았다. 구현 시 실호출로 확인하고, 추가 필드가
-  있으면 별도 타입으로 담되 기본 경로(`false`)의 구조는 바꾸지 않는다.
+- **`includeRawExchangeData=true` 는 현재 Tiingo 가 HTTP 500 을 돌려준다**(2026-09-05 실측, 본문은
+  HTML `text/html` 27바이트). `false` 는 200. 서버 쪽 문제로 보이므로 옵션은 문서대로 지원하되
+  **통합 테스트가 이 값에 의존하지 않게** 하고, 단위 테스트로 쿼리 전송만 검증한다. 추후 서버가
+  고쳐지면 응답을 실측해 추가 필드를 담는다(기본 경로 구조는 바꾸지 않는다).
 - `Meta` 를 티커 없이 부르면 지원 페어 전체가 온다. `encoding/json` 은 슬라이스 원소 하나라도
   파싱에 실패하면 전체가 실패하므로, 대량 응답에서 예상 밖 값이 오면 전량 실패한다(Fundamentals
   리뷰에서 지적된 것과 같은 성질).
