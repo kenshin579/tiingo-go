@@ -13,6 +13,11 @@ func TestNewClient(t *testing.T) {
 	c, err := NewClient("key")
 	require.NoError(t, err)
 	assert.NotNil(t, c.EOD)
+	assert.NotNil(t, c.Fundamentals)
+	assert.NotNil(t, c.Crypto)
+	assert.NotNil(t, c.Forex)
+	assert.NotNil(t, c.IEX)
+	assert.NotNil(t, c.Search)
 
 	_, err = NewClient("")
 	assert.Error(t, err, "빈 키는 에러")

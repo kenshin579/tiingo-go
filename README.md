@@ -46,9 +46,15 @@ qs, _ := c.Forex.TopOfBook(ctx, []string{"eurusd", "usdjpy"})
 
 // IEX 실시간 스냅샷(장 마감 시 호가 필드는 nil)
 iqs, _ := c.IEX.Quotes(ctx, []string{"AAPL", "MSFT"})
+
+// 자산 검색(티커·이름). 같은 티커가 국가별로 중복될 수 있어 PermaTicker 로 구분한다
+rs, _ := c.Search.Search(ctx, "apple", &search.SearchOptions{Limit: 5})
+
+// ISIN 으로 자산 하나를 지목한다(문서 파라미터 표에는 없지만 동작한다)
+byISIN, _ := c.Search.SearchByISIN(ctx, "US0378331005", nil)
 ```
 
-실행 가능한 예시: [`examples/eod`](examples/eod), [`examples/fundamentals`](examples/fundamentals), [`examples/crypto`](examples/crypto), [`examples/forex`](examples/forex), [`examples/iex`](examples/iex).
+실행 가능한 예시: [`examples/eod`](examples/eod), [`examples/fundamentals`](examples/fundamentals), [`examples/crypto`](examples/crypto), [`examples/forex`](examples/forex), [`examples/iex`](examples/iex), [`examples/search`](examples/search).
 
 ## 인증
 
@@ -74,11 +80,13 @@ iqs, _ := c.IEX.Quotes(ctx, []string{"AAPL", "MSFT"})
 | Forex | `Forex.Prices` | `GET /tiingo/fx/<tickers>/prices` |
 | IEX | `IEX.Quotes` | `GET /iex/` |
 | IEX | `IEX.Prices` | `GET /iex/<ticker>/prices` |
+| Search | `Search.Search` | `GET /tiingo/utilities/search` |
+| Search | `Search.SearchByISIN` | `GET /tiingo/utilities/search` |
 
 \* Fundamentals 는 별도 구독(add-on)이다. 무료 플랜은 Dow 30 종목의 3년치만 제공하며, 권한 밖
 종목은 `APIError`(400/403)로 돌아온다.
 
-나머지 REST 그룹(News, Equity Realtime, BOATS, Fund Fees, Search, Dividends/Splits)과 WebSocket 은
+나머지 REST 그룹(News, Equity Realtime, BOATS, Fund Fees, Dividends/Splits)과 WebSocket 은
 순차 추가 예정.
 
 ## 날짜 타입
@@ -97,6 +105,9 @@ RFC3339 다. 예를 들어 `resampleFreq=1min` 시세의 `date` 는 분 단위 �
 IEX 스냅샷은 장 마감 시간대에 호가·체결 관련 9개 필드가 `null` 로 온다. 값 타입으로 받으면 0 과
 구분되지 않으므로 해당 필드는 포인터(`*float64`, `*types.Time`)이며 `nil` 은 "값 없음"이다.
 없는 티커는 에러가 아니라 응답에서 빠지고 순서도 요청과 다르므로, 결과는 `Ticker` 필드로 찾는다.
+
+검색 결과의 `OpenFIGIComposite` 는 값이 없을 때 Tiingo 가 `null` 과 문자열 `"nan"` 을 섞어 보내므로
+둘 다 빈 문자열로 정규화된다. `r.OpenFIGIComposite != ""` 하나만 확인하면 된다.
 
 ## 에러 처리
 
@@ -122,7 +133,8 @@ Tiingo 는 시간당·일당 요청 수와 월 대역폭으로 제한하며 분/
 ```bash
 go test ./...                                       # 단위 테스트
 TIINGO_API_KEY=... go test -tags integration ./...  # 실호출 통합 테스트
-go build -o /dev/null ./examples/eod                # 예제 빌드(레포 루트의 eod/ 와 이름이 겹쳐 -o 필요)
+go build -o /dev/null ./examples/eod                # 예제 빌드(레포 루트의 동명 디렉터리와 겹치면 -o 필요)
+go build -o /dev/null ./examples/search             # eod/·search/ 가 이에 해당한다
 ```
 
 ## 문서

@@ -14,6 +14,7 @@ import (
 	"github.com/kenshin579/tiingo-go/forex"
 	"github.com/kenshin579/tiingo-go/fundamentals"
 	"github.com/kenshin579/tiingo-go/iex"
+	"github.com/kenshin579/tiingo-go/search"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -275,4 +276,44 @@ func TestIntegration_IEXPricesVolume(t *testing.T) {
 		}
 	}
 	assert.Positive(t, withVolume, "columns 에 volume 을 넣으면 일부 구간은 거래량이 채워진다")
+}
+
+func TestIntegration_Search(t *testing.T) {
+	c := newClient(t)
+	rs, err := c.Search.Search(context.Background(), "apple", nil)
+	require.NoError(t, err)
+	require.NotEmpty(t, rs)
+	for _, r := range rs {
+		assert.NotEmpty(t, r.Ticker)
+		assert.NotEmpty(t, r.PermaTicker)
+		assert.NotEqual(t, search.FIGI("nan"), r.OpenFIGIComposite, "결손 값은 빈 문자열로 정규화된다")
+	}
+}
+
+// ISIN 으로 자산 하나를 지목한다. 문서 표에 없는 파라미터라 실 API 로 확인해 둔다.
+func TestIntegration_SearchByISIN(t *testing.T) {
+	c := newClient(t)
+	rs, err := c.Search.SearchByISIN(context.Background(), "US0378331005", nil)
+	require.NoError(t, err)
+	require.Len(t, rs, 1)
+	assert.Equal(t, "AAPL", rs[0].Ticker)
+	assert.Equal(t, "US", rs[0].CountryCode)
+}
+
+func TestIntegration_SearchExactTickerMatch(t *testing.T) {
+	c := newClient(t)
+	rs, err := c.Search.Search(context.Background(), "aapl", &search.SearchOptions{ExactTickerMatch: true})
+	require.NoError(t, err)
+	require.NotEmpty(t, rs)
+	for _, r := range rs {
+		assert.Equal(t, "AAPL", r.Ticker, "정확히 일치하는 티커만 온다")
+	}
+}
+
+// 없는 자산은 에러가 아니라 빈 슬라이스다.
+func TestIntegration_SearchEmptyResult(t *testing.T) {
+	c := newClient(t)
+	rs, err := c.Search.Search(context.Background(), "zzzznosuchassetxyz", nil)
+	require.NoError(t, err)
+	assert.Empty(t, rs)
 }
