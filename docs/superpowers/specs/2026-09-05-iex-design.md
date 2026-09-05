@@ -52,6 +52,13 @@ askPrice, askSize, bidPrice, bidSize, last, lastSaleTimestamp, lastSize, mid, qu
 - **`afterHours=true` 는 행이 늘어난다**(실측 1시간봉 12행 → 19행). 장 전후 데이터가 포함된다.
 - `forceFill=true` 는 같은 12행(거래 없는 구간이 없었던 듯).
 - 시세의 `date` 는 `2026-09-03T13:30:00.000Z` 처럼 시각이다 → `types.Time`.
+- **`volume` 의 JSON 표기가 엔드포인트마다 다르다.** 시세는 `"volume": 38607.0`(소수점 있음),
+  스냅샷은 `"volume": 39606884`(정수). Go 의 `encoding/json` 은 소수점 있는 수를 `int64` 에 넣지 못하고
+  **에러**를 낸다(`cannot unmarshal number 38607.0 into ... int64`, 실측). 따라서 **시세의 Volume 은
+  `float64`**, 스냅샷의 Volume 은 `int64` 로 둔다. 문서 표는 둘 다 int64 라 적지만 실제와 다르다.
+- 같은 이유로 스냅샷의 null 인 수량 필드(`lastSize`, `bidSize`, `askSize`)는 **`*float64`** 로 둔다.
+  장 마감이라 실제 표기를 못 봤는데, 같은 API 가 수량에 소수점을 붙이는 전례가 있으므로 `*int64` 면
+  장중에 디코딩이 하드 실패한다. `*float64` 는 `100` 과 `100.0` 을 모두 받는다.
 
 ## 결정 사항 (브레인스토밍)
 
@@ -104,11 +111,11 @@ type Quote struct {
 	Mid               *float64    `json:"mid"`               // 중간가. 장 마감 시 nil
 	TngoLast          float64     `json:"tngoLast"`          // Tiingo 기준 최종가. 장 마감 후에도 채워진다
 	Last              *float64    `json:"last"`              // IEX 최종 체결가. 장 마감 시 nil
-	LastSize          *int64      `json:"lastSize"`          // 마지막 체결 수량. 장 마감 시 nil
-	BidSize           *int64      `json:"bidSize"`           // 매수 호가 수량. 장 마감 시 nil
+	LastSize          *float64    `json:"lastSize"`          // 마지막 체결 수량. 장 마감 시 nil
+	BidSize           *float64    `json:"bidSize"`           // 매수 호가 수량. 장 마감 시 nil
 	BidPrice          *float64    `json:"bidPrice"`          // 매수 호가. 장 마감 시 nil
 	AskPrice          *float64    `json:"askPrice"`          // 매도 호가. 장 마감 시 nil
-	AskSize           *int64      `json:"askSize"`           // 매도 호가 수량. 장 마감 시 nil
+	AskSize           *float64    `json:"askSize"`           // 매도 호가 수량. 장 마감 시 nil
 	Volume            int64       `json:"volume"`            // 당일 누적 거래량
 	PrevClose         float64     `json:"prevClose"`         // 전일 종가
 }
@@ -121,7 +128,7 @@ type Price struct {
 	High   float64    `json:"high"`   // 고가
 	Low    float64    `json:"low"`    // 저가
 	Close  float64    `json:"close"`  // 종가
-	Volume int64      `json:"volume"` // IEX 거래량. columns 에 명시하지 않으면 응답에 없어 0 이다
+	Volume float64    `json:"volume"` // IEX 거래량. columns 미지정 시 0. Tiingo 가 소수점을 붙여 보내 float64 다
 }
 ```
 
