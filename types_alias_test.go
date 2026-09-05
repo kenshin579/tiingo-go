@@ -17,3 +17,12 @@ func TestDateAlias(t *testing.T) {
 
 	var _ types.Date = d // 별칭이므로 같은 타입
 }
+
+func TestTimeAlias(t *testing.T) {
+	var v Time
+	require.NoError(t, json.Unmarshal([]byte(`"2026-08-21T01:01:17.444Z"`), &v))
+	assert.Equal(t, 17, v.Second(), "시각이 보존된다")
+	assert.Equal(t, "2026-08-21T01:01:17.444Z", v.String())
+
+	var _ types.Time = v // 별칭이므로 같은 타입
+}

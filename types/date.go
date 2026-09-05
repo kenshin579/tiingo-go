@@ -14,8 +14,8 @@ const DateLayout = "2006-01-02"
 // Date 는 Tiingo 의 날짜 값이다. 응답에서 두 형식(RFC3339 타임스탬프, YYYY-MM-DD)이 모두
 // 오기 때문에 둘 다 받아 time.Time 으로 정규화하고, 직렬화할 때는 YYYY-MM-DD 로 쓴다.
 // null 이나 빈 문자열은 zero value 가 되며 IsZero() 로 구분한다.
-// 날짜 전용 타입이다 — 뉴스 publishedDate 나 IEX 체결 시각처럼 시각까지 의미 있는 필드는
-// time.Time 을 그대로 쓴다.
+// 날짜 전용 타입이다 — 갱신 시각(statementLastUpdated)이나 체결 시각처럼 시각까지 의미 있는
+// 필드는 Time 을 쓴다.
 type Date struct {
 	time.Time
 }
