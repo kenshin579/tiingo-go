@@ -52,9 +52,12 @@ rs, _ := c.Search.Search(ctx, "apple", &search.SearchOptions{Limit: 5})
 
 // ISIN 으로 자산 하나를 지목한다(문서 파라미터 표에는 없지만 동작한다)
 byISIN, _ := c.Search.SearchByISIN(ctx, "US0378331005", nil)
+
+// 통합 피드 스냅샷(여러 거래소·ATS·OTC). 유동성 지표는 없을 수 있어 포인터다
+es, _ := c.Equity.Snapshots(ctx, []string{"AAPL", "SPY"})
 ```
 
-실행 가능한 예시: [`examples/eod`](examples/eod), [`examples/fundamentals`](examples/fundamentals), [`examples/crypto`](examples/crypto), [`examples/forex`](examples/forex), [`examples/iex`](examples/iex), [`examples/search`](examples/search).
+실행 가능한 예시: [`examples/eod`](examples/eod), [`examples/fundamentals`](examples/fundamentals), [`examples/crypto`](examples/crypto), [`examples/forex`](examples/forex), [`examples/iex`](examples/iex), [`examples/search`](examples/search), [`examples/equity`](examples/equity).
 
 ## 인증
 
@@ -82,12 +85,15 @@ byISIN, _ := c.Search.SearchByISIN(ctx, "US0378331005", nil)
 | IEX | `IEX.Prices` | `GET /iex/<ticker>/prices` |
 | Search | `Search.Search` | `GET /tiingo/utilities/search` |
 | Search | `Search.SearchByISIN` | `GET /tiingo/utilities/search` |
+| Equity Realtime | `Equity.Snapshots` | `GET /tiingo/equity/intraday/` |
+| Equity Realtime | `Equity.AllSnapshots` | `GET /tiingo/equity/intraday/` |
+| Equity Realtime | `Equity.Prices` | `GET /tiingo/equity/intraday/<ticker>/prices` |
 
 \* Fundamentals 는 별도 구독(add-on)이다. 무료 플랜은 Dow 30 종목의 3년치만 제공하며, 권한 밖
 종목은 `APIError`(400/403)로 돌아온다.
 
-나머지 REST 그룹(News, Equity Realtime, BOATS, Fund Fees, Dividends/Splits)과 WebSocket 은
-순차 추가 예정.
+나머지 REST 그룹(News — 별도 플랜 필요, BOATS — 별도 등록 필요, Fund Fees, Dividends/Splits)과
+WebSocket 은 순차 추가 예정.
 
 ## 날짜 타입
 
@@ -108,6 +114,10 @@ IEX 스냅샷은 장 마감 시간대에 호가·체결 관련 9개 필드가 `n
 
 검색 결과의 `OpenFIGIComposite` 는 값이 없을 때 Tiingo 가 `null` 과 문자열 `"nan"` 을 섞어 보내므로
 둘 다 빈 문자열로 정규화된다. `r.OpenFIGIComposite != ""` 하나만 확인하면 된다.
+
+Equity Realtime 스냅샷의 유동성 5개 필드(`LqSpread`, `LqBidPrice`, `LqBidSize`, `LqAskPrice`,
+`LqAskSize`)도 통합 피드가 값을 내지 않으면 `null` 이라 포인터다 — 전 종목 조회 기준 44% 가
+그렇다. 이름이 비슷한 `LqRefPrice` 는 늘 채워져 값 타입이다.
 
 ## 에러 처리
 
@@ -134,7 +144,8 @@ Tiingo 는 시간당·일당 요청 수와 월 대역폭으로 제한하며 분/
 go test ./...                                       # 단위 테스트
 TIINGO_API_KEY=... go test -tags integration ./...  # 실호출 통합 테스트
 go build -o /dev/null ./examples/eod                # 예제 빌드(레포 루트의 동명 디렉터리와 겹치면 -o 필요)
-go build -o /dev/null ./examples/search             # eod/·search/ 가 이에 해당한다
+go build -o /dev/null ./examples/search             # eod/·search/·equity/ 가 이에 해당한다
+go build -o /dev/null ./examples/equity
 ```
 
 ## 문서

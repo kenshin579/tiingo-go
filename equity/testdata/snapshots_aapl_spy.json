@@ -1,0 +1,34 @@
+[
+    {
+        "ticker": "SPY",
+        "timestamp": "2026-09-04T19:59:59.575169155-04:00",
+        "open": 773.605,
+        "high": 774.27,
+        "low": 768.99,
+        "tngoLast": 769.71,
+        "prevClose": 773.595,
+        "volume": 1412728.0,
+        "lqSpread": 0.000909,
+        "lqBidPrice": 769.375,
+        "lqBidSize": 240,
+        "lqRefPrice": 769.71,
+        "lqAskPrice": 770.075,
+        "lqAskSize": 200
+    },
+    {
+        "ticker": "AAPL",
+        "timestamp": "2026-09-04T19:59:34.935723167-04:00",
+        "open": 328.29,
+        "high": 328.915,
+        "low": 317.845,
+        "tngoLast": 320.08,
+        "prevClose": 328.29,
+        "volume": 1778528.0,
+        "lqSpread": 0.0005,
+        "lqBidPrice": 320.015,
+        "lqBidSize": 100,
+        "lqRefPrice": 320.08,
+        "lqAskPrice": 320.175,
+        "lqAskSize": 100
+    }
+]

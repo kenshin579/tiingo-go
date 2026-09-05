@@ -18,6 +18,7 @@ func TestNewClient(t *testing.T) {
 	assert.NotNil(t, c.Forex)
 	assert.NotNil(t, c.IEX)
 	assert.NotNil(t, c.Search)
+	assert.NotNil(t, c.Equity)
 
 	_, err = NewClient("")
 	assert.Error(t, err, "빈 키는 에러")
