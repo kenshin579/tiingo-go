@@ -1,0 +1,23 @@
+[
+    {
+        "ticker": "btcusd",
+        "baseCurrency": "btc",
+        "quoteCurrency": "usd",
+        "topOfBookData": [
+            {
+                "quoteTimestamp": "2026-09-05T07:07:11.400873+00:00",
+                "lastSaleTimestamp": "2026-09-05T07:07:20.478960+00:00",
+                "bidSize": 0.11276158,
+                "bidPrice": 79705.78,
+                "askSize": 0.018784,
+                "askPrice": 79696.9,
+                "lastSize": 2.4e-07,
+                "lastSizeNotional": 0.019129387199999997,
+                "lastPrice": 79705.78,
+                "bidExchange": "GDAX",
+                "askExchange": "BULLISH",
+                "lastExchange": "GDAX"
+            }
+        ]
+    }
+]

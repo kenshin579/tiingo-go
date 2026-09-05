@@ -1,0 +1,8 @@
+[
+    {
+        "ticker": "btcusd",
+        "name": "Bitcoin (BTC/USD)",
+        "baseCurrency": "btc",
+        "quoteCurrency": "usd"
+    }
+]

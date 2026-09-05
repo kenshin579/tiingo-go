@@ -9,6 +9,7 @@ import (
 	"time"
 
 	tiingo "github.com/kenshin579/tiingo-go"
+	"github.com/kenshin579/tiingo-go/crypto"
 	"github.com/kenshin579/tiingo-go/eod"
 	"github.com/kenshin579/tiingo-go/fundamentals"
 	"github.com/stretchr/testify/assert"
@@ -114,4 +115,54 @@ func TestIntegration_FundamentalsDaily(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, ds)
 	assert.Greater(t, ds[0].MarketCap, 0.0)
+}
+
+func TestIntegration_CryptoMeta(t *testing.T) {
+	c := newClient(t)
+	ms, err := c.Crypto.Meta(context.Background(), "btcusd", "ethusd")
+	require.NoError(t, err)
+	require.Len(t, ms, 2)
+	assert.Equal(t, "btcusd", ms[0].Ticker)
+	assert.Equal(t, "btc", ms[0].BaseCurrency)
+}
+
+func TestIntegration_CryptoPrices(t *testing.T) {
+	c := newClient(t)
+	ss, err := c.Crypto.Prices(context.Background(), []string{"btcusd"}, &crypto.PriceOptions{
+		StartDate:    time.Now().AddDate(0, 0, -3),
+		ResampleFreq: crypto.Resample1Day,
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, ss)
+	require.NotEmpty(t, ss[0].PriceData)
+	assert.Greater(t, ss[0].PriceData[0].Close, 0.0)
+}
+
+// 1분봉은 시각이 보존돼야 한다 — types.Time 사용의 실호출 확인.
+func TestIntegration_CryptoIntraday(t *testing.T) {
+	c := newClient(t)
+	s, err := c.Crypto.PricesFor(context.Background(), "btcusd", &crypto.PriceOptions{
+		ResampleFreq: crypto.Resample1Min,
+	})
+	require.NoError(t, err)
+	require.GreaterOrEqual(t, len(s.PriceData), 2)
+	d0, d1 := s.PriceData[0].Date.Time, s.PriceData[1].Date.Time
+	assert.Equal(t, time.Minute, d1.Sub(d0))
+}
+
+func TestIntegration_CryptoTopOfBook(t *testing.T) {
+	c := newClient(t)
+	b, err := c.Crypto.TopOfBookFor(context.Background(), "btcusd", nil)
+	require.NoError(t, err)
+	require.NotEmpty(t, b.TopOfBookData)
+	d := b.TopOfBookData[0]
+	assert.Greater(t, d.BidPrice, 0.0)
+	assert.Greater(t, d.AskPrice, 0.0)
+	assert.False(t, d.QuoteTimestamp.IsZero())
+}
+
+func TestIntegration_CryptoUnknownTicker(t *testing.T) {
+	c := newClient(t)
+	_, err := c.Crypto.PricesFor(context.Background(), "nosuchpairxyz", nil)
+	assert.Error(t, err, "없는 페어는 에러(빈 배열이면 ErrNotFound)")
 }
