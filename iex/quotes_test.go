@@ -62,7 +62,7 @@ func TestQuotes_NonNullFields(t *testing.T) {
 	body := `[{"ticker":"AAPL","timestamp":"2026-09-03T15:59:59.999999+00:00",
 	  "lastSaleTimestamp":"2026-09-03T15:59:58.000000+00:00","quoteTimestamp":"2026-09-03T15:59:59.500000+00:00",
 	  "open":324.97,"high":330.8,"low":324.3,"mid":327.5,"tngoLast":327.6,"last":327.55,
-	  "lastSize":100,"bidSize":200,"bidPrice":327.4,"askPrice":327.6,"askSize":300,
+	  "lastSize":100,"bidSize":200,"bidPrice":327.4,"askPrice":327.6,"askSize":300.0,
 	  "volume":39606884,"prevClose":328.21}]`
 
 	c, _ := newStubClient(t, http.StatusOK, body)
@@ -74,7 +74,7 @@ func TestQuotes_NonNullFields(t *testing.T) {
 	require.NotNil(t, q.BidPrice)
 	assert.InDelta(t, 327.4, *q.BidPrice, 0.001)
 	require.NotNil(t, q.AskSize)
-	assert.Equal(t, int64(300), *q.AskSize)
+	assert.InDelta(t, 300.0, *q.AskSize, 0.001)
 	require.NotNil(t, q.QuoteTimestamp)
 	assert.False(t, q.QuoteTimestamp.IsZero())
 	require.NotNil(t, q.Last)

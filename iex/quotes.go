@@ -22,13 +22,16 @@ type Quote struct {
 	Mid               *float64    `json:"mid"`               // 중간가. 장 마감 시 nil
 	TngoLast          float64     `json:"tngoLast"`          // Tiingo 기준 최종가. 장 마감 후에도 채워진다
 	Last              *float64    `json:"last"`              // IEX 최종 체결가. 장 마감 시 nil
-	LastSize          *int64      `json:"lastSize"`          // 마지막 체결 수량. 장 마감 시 nil
-	BidSize           *int64      `json:"bidSize"`           // 매수 호가 수량. 장 마감 시 nil
-	BidPrice          *float64    `json:"bidPrice"`          // 매수 호가. 장 마감 시 nil
-	AskPrice          *float64    `json:"askPrice"`          // 매도 호가. 장 마감 시 nil
-	AskSize           *int64      `json:"askSize"`           // 매도 호가 수량. 장 마감 시 nil
-	Volume            int64       `json:"volume"`            // 당일 누적 거래량
-	PrevClose         float64     `json:"prevClose"`         // 전일 종가
+	// LastSize/BidSize/AskSize 는 *float64 다. Tiingo 가 프라이스 엔드포인트에서
+	// 수량을 "38607.0" 처럼 소수점을 붙여 보내는 사례가 있어(prices.go 참고),
+	// 이 스냅샷 필드들도 같은 계열이라 int64 로 두면 장중 응답에서 디코딩이 깨질 위험이 있다.
+	LastSize  *float64 `json:"lastSize"`  // 마지막 체결 수량. 장 마감 시 nil
+	BidSize   *float64 `json:"bidSize"`   // 매수 호가 수량. 장 마감 시 nil
+	BidPrice  *float64 `json:"bidPrice"`  // 매수 호가. 장 마감 시 nil
+	AskPrice  *float64 `json:"askPrice"`  // 매도 호가. 장 마감 시 nil
+	AskSize   *float64 `json:"askSize"`   // 매도 호가 수량. 장 마감 시 nil
+	Volume    int64    `json:"volume"`    // 당일 누적 거래량
+	PrevClose float64  `json:"prevClose"` // 전일 종가
 }
 
 // joinTickers 는 티커 목록을 검증해 콤마로 합친다. 공백뿐인 원소나 빈 목록은 에러다.
