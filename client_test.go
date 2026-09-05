@@ -34,3 +34,9 @@ func TestNewClientFromEnv(t *testing.T) {
 	_, err = NewClientFromEnv()
 	assert.Error(t, err, "환경변수 없으면 에러")
 }
+
+func TestNewClient_WiresSearch(t *testing.T) {
+	c, err := NewClient("k")
+	require.NoError(t, err)
+	assert.NotNil(t, c.Search)
+}
