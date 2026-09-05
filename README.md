@@ -40,9 +40,12 @@ rev, ok := ss[0].StatementData.Get(fundamentals.CodeRevenue)
 
 // 암호화폐 일봉(단일 페어는 PricesFor 로 바로 받는다)
 cs, _ := c.Crypto.PricesFor(ctx, "btcusd", &crypto.PriceOptions{ResampleFreq: crypto.Resample1Day})
+
+// 통화쌍 호가(복수 조회 가능)
+qs, _ := c.Forex.TopOfBook(ctx, []string{"eurusd", "usdjpy"})
 ```
 
-실행 가능한 예시: [`examples/eod`](examples/eod), [`examples/fundamentals`](examples/fundamentals), [`examples/crypto`](examples/crypto).
+실행 가능한 예시: [`examples/eod`](examples/eod), [`examples/fundamentals`](examples/fundamentals), [`examples/crypto`](examples/crypto), [`examples/forex`](examples/forex).
 
 ## 인증
 
@@ -64,11 +67,14 @@ cs, _ := c.Crypto.PricesFor(ctx, "btcusd", &crypto.PriceOptions{ResampleFreq: cr
 | Crypto | `Crypto.Meta` | `GET /tiingo/crypto` |
 | Crypto | `Crypto.Prices` / `PricesFor` | `GET /tiingo/crypto/prices` |
 | Crypto | `Crypto.TopOfBook` / `TopOfBookFor` | `GET /tiingo/crypto/top` |
+| Forex | `Forex.TopOfBook` | `GET /tiingo/fx/top` |
+| Forex | `Forex.Prices` | `GET /tiingo/fx/<tickers>/prices` |
 
 \* Fundamentals 는 별도 구독(add-on)이다. 무료 플랜은 Dow 30 종목의 3년치만 제공하며, 권한 밖
 종목은 `APIError`(400/403)로 돌아온다.
 
-나머지 REST 그룹(News, Forex, IEX, BOATS, Dividends/Splits 등)과 WebSocket 은 순차 추가 예정.
+나머지 REST 그룹(News, Equity Realtime, IEX, BOATS, Fund Fees, Search, Dividends/Splits 등)과
+WebSocket 은 순차 추가 예정.
 
 ## 날짜 타입
 
