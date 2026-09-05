@@ -11,6 +11,7 @@ import (
 	tiingo "github.com/kenshin579/tiingo-go"
 	"github.com/kenshin579/tiingo-go/crypto"
 	"github.com/kenshin579/tiingo-go/eod"
+	"github.com/kenshin579/tiingo-go/forex"
 	"github.com/kenshin579/tiingo-go/fundamentals"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -165,4 +166,53 @@ func TestIntegration_CryptoUnknownTicker(t *testing.T) {
 	c := newClient(t)
 	_, err := c.Crypto.PricesFor(context.Background(), "nosuchpairxyz", nil)
 	assert.Error(t, err, "없는 페어는 에러(빈 배열이면 ErrNotFound)")
+}
+
+func TestIntegration_ForexTopOfBook(t *testing.T) {
+	c := newClient(t)
+	qs, err := c.Forex.TopOfBook(context.Background(), []string{"eurusd", "usdjpy"})
+	require.NoError(t, err)
+	require.Len(t, qs, 2)
+	assert.Equal(t, "eurusd", qs[0].Ticker)
+	assert.Greater(t, qs[0].MidPrice, 0.0)
+	assert.False(t, qs[0].QuoteTimestamp.IsZero())
+}
+
+// 주말에도 실패하지 않도록 최근 7일을 조회하고, 빈 응답을 허용한다.
+func TestIntegration_ForexPrices(t *testing.T) {
+	c := newClient(t)
+	ps, err := c.Forex.Prices(context.Background(), []string{"eurusd"}, &forex.PriceOptions{
+		StartDate:    time.Now().AddDate(0, 0, -7),
+		ResampleFreq: forex.Resample1Day,
+	})
+	require.NoError(t, err)
+	for _, p := range ps {
+		assert.Equal(t, "eurusd", p.Ticker)
+		assert.Greater(t, p.Close, 0.0)
+	}
+}
+
+func TestIntegration_ForexMultiTickerPath(t *testing.T) {
+	c := newClient(t)
+	ps, err := c.Forex.Prices(context.Background(), []string{"eurusd", "usdjpy"}, &forex.PriceOptions{
+		StartDate:    time.Now().AddDate(0, 0, -7),
+		ResampleFreq: forex.Resample1Day,
+	})
+	require.NoError(t, err)
+	if len(ps) == 0 {
+		t.Skip("조회 구간이 전부 휴장일")
+	}
+	seen := map[string]bool{}
+	for _, p := range ps {
+		seen[p.Ticker] = true
+	}
+	assert.Len(t, seen, 2, "복수 티커가 경로로 전달돼 두 통화쌍이 와야 한다")
+}
+
+// 없는 통화쌍은 에러가 아니라 빈 슬라이스다(주말과 구분되지 않는다).
+func TestIntegration_ForexUnknownTicker(t *testing.T) {
+	c := newClient(t)
+	ps, err := c.Forex.Prices(context.Background(), []string{"nosuchpair"}, nil)
+	require.NoError(t, err)
+	assert.Empty(t, ps)
 }
