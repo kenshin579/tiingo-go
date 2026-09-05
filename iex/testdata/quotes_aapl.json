@@ -1,0 +1,21 @@
+[
+    {
+        "ticker": "AAPL",
+        "timestamp": "2026-09-04T20:00:00+00:00",
+        "lastSaleTimestamp": null,
+        "quoteTimestamp": null,
+        "open": 328.305,
+        "high": 328.93,
+        "low": 317.86,
+        "mid": null,
+        "tngoLast": 319.97,
+        "last": null,
+        "lastSize": null,
+        "bidSize": null,
+        "bidPrice": null,
+        "askPrice": null,
+        "askSize": null,
+        "volume": 39606884,
+        "prevClose": 328.21
+    }
+]
