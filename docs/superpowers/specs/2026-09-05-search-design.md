@@ -145,8 +145,9 @@ type SearchOptions struct {
 - `query`/`isin` 은 `strings.TrimSpace` 후 빈 값이면 에러(Tiingo 도 400 을 주지만 왕복을 아낀다).
 - `ExactTickerMatch`/`IncludeDelisted` 는 true 일 때만 전송, `Limit` 은 0 초과일 때만, `Columns` 는
   콤마 결합.
-- 두 메서드는 같은 옵션 구조체를 공유한다. **`isin` 과 다른 옵션의 조합은 문서에 없으므로 구현 시
-  실호출로 확인**하고, 동작하지 않는 조합이 있으면 주석에 남긴다.
+- 두 메서드는 같은 옵션 구조체를 공유한다. `isin` 과 네 옵션의 조합을 실호출로 모두 확인했다 —
+  `limit`·`includeDelisted`·`exactTickerMatch` 는 200 이고, `columns` 는 지정한 키만 남는다.
+  옵션 구조체를 나눌 이유가 없다.
 
 ## 테스트
 
