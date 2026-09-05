@@ -175,7 +175,9 @@ func (c *Client) Snapshots(ctx context.Context, tickers []string) ([]Snapshot, e
 func (c *Client) AllSnapshots(ctx context.Context) ([]Snapshot, error)
 
 // Prices 는 인트라데이 시세를 받는다. GET /tiingo/equity/intraday/<ticker>/prices
-// 티커는 하나만 받는다. 없는 티커면 404(ErrNotFound), 휴장 구간이면 빈 슬라이스다.
+// 티커는 하나만 받는다. 없는 티커면 404 이고, 휴장 구간이면 빈 슬라이스다.
+// 404 는 APIError{StatusCode: 404} 로 온다 — ErrNotFound 가 아니다(그건 서비스 계층이
+// 빈 결과에 쓰는 sentinel 이다).
 func (c *Client) Prices(ctx context.Context, ticker string, opts *PriceOptions) ([]Price, error)
 ```
 
@@ -197,7 +199,7 @@ Equity 도 같은 동작이라 두 곳의 주석을 같은 문장으로 맞춘�
   `prices_aapl_volume.json`(**`448768.0` 소수점 volume**).
 - **단위 테스트**: 스냅샷 파싱, **Lq* null → nil**(0 이 아님), **소수점 volume 디코딩**,
   티커 조인·빈 목록 에러, 없는 티커가 빠져도 에러가 아님, `AllSnapshots` 가 tickers 를 안 보냄,
-  쿼리 생성(zero 값 생략, true 일 때만, Columns 콤마 결합), 404 → `ErrNotFound`, 빈 배열이 에러가 아님.
+  쿼리 생성(zero 값 생략, true 일 때만, Columns 콤마 결합), 404 → `APIError`(StatusCode 404), 빈 배열이 에러가 아님.
 - **integration**: `Snapshots`(AAPL·SPY), `AllSnapshots`(건수만 확인 — 매번 5MB 를 받으므로 한 건만),
   `Prices`, 없는 티커 404. 장 마감·주말에도 깨지지 않게 nil 여부는 단정하지 않는다.
 
