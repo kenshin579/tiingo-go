@@ -11,6 +11,7 @@ import (
 	tiingo "github.com/kenshin579/tiingo-go"
 	"github.com/kenshin579/tiingo-go/crypto"
 	"github.com/kenshin579/tiingo-go/eod"
+	"github.com/kenshin579/tiingo-go/equity"
 	"github.com/kenshin579/tiingo-go/forex"
 	"github.com/kenshin579/tiingo-go/fundamentals"
 	"github.com/kenshin579/tiingo-go/iex"
@@ -316,4 +317,61 @@ func TestIntegration_SearchEmptyResult(t *testing.T) {
 	rs, err := c.Search.Search(context.Background(), "zzzznosuchassetxyz", nil)
 	require.NoError(t, err)
 	assert.Empty(t, rs)
+}
+
+// 장 마감·주말에도 깨지지 않도록 Lq* 의 nil 여부는 단정하지 않는다.
+func TestIntegration_EquitySnapshots(t *testing.T) {
+	c := newClient(t)
+	ss, err := c.Equity.Snapshots(context.Background(), []string{"AAPL", "SPY"})
+	require.NoError(t, err)
+	require.Len(t, ss, 2)
+	for _, s := range ss {
+		assert.NotEmpty(t, s.Ticker)
+		assert.False(t, s.Timestamp.IsZero())
+		assert.Greater(t, s.TngoLast, 0.0)
+		assert.Greater(t, s.PrevClose, 0.0)
+		assert.Greater(t, s.LqRefPrice, 0.0)
+		if s.LqSpread != nil {
+			assert.Greater(t, *s.LqSpread, 0.0, "유동성 지표가 있으면 양수여야 한다")
+		}
+	}
+}
+
+// 없는 티커는 응답에서 빠진다.
+func TestIntegration_EquityUnknownTickerOmitted(t *testing.T) {
+	c := newClient(t)
+	ss, err := c.Equity.Snapshots(context.Background(), []string{"AAPL", "NOSUCHTICKERXYZ"})
+	require.NoError(t, err)
+	assert.Len(t, ss, 1, "없는 티커는 빠지고 AAPL 만 온다")
+}
+
+// 전 종목 조회는 약 5MB 라 한 건만 돌린다. 포인터로 둔 근거를 실 API 로 확인한다.
+func TestIntegration_EquityAllSnapshots(t *testing.T) {
+	c := newClient(t)
+	ss, err := c.Equity.AllSnapshots(context.Background())
+	require.NoError(t, err)
+	assert.Greater(t, len(ss), 1000, "전 종목이라 수천 건이 온다")
+
+	var withLq int
+	for _, s := range ss {
+		if s.LqSpread != nil {
+			withLq++
+		}
+	}
+	assert.Positive(t, withLq, "일부는 유동성 지표가 채워져 있다")
+	assert.Less(t, withLq, len(ss), "일부는 비어 있다 — 포인터로 둔 이유다")
+}
+
+func TestIntegration_EquityPrices(t *testing.T) {
+	c := newClient(t)
+	ps, err := c.Equity.Prices(context.Background(), "AAPL", &equity.PriceOptions{
+		StartDate:    time.Now().AddDate(0, 0, -5),
+		ResampleFreq: equity.Resample1Hour,
+		Columns:      []string{"open", "high", "low", "close", "volume"},
+	})
+	require.NoError(t, err)
+	for _, p := range ps {
+		assert.False(t, p.Date.IsZero())
+		assert.Greater(t, p.Close, 0.0)
+	}
 }
