@@ -13,6 +13,7 @@ import (
 	"github.com/kenshin579/tiingo-go/eod"
 	"github.com/kenshin579/tiingo-go/forex"
 	"github.com/kenshin579/tiingo-go/fundamentals"
+	"github.com/kenshin579/tiingo-go/iex"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -215,4 +216,63 @@ func TestIntegration_ForexUnknownTicker(t *testing.T) {
 	ps, err := c.Forex.Prices(context.Background(), []string{"nosuchpair"}, nil)
 	require.NoError(t, err)
 	assert.Empty(t, ps)
+}
+
+// 장 마감·개장 어느 때 돌려도 깨지지 않도록 nil 여부는 단정하지 않는다.
+func TestIntegration_IEXQuotes(t *testing.T) {
+	c := newClient(t)
+	qs, err := c.IEX.Quotes(context.Background(), []string{"AAPL", "MSFT"})
+	require.NoError(t, err)
+	require.Len(t, qs, 2)
+	for _, q := range qs {
+		assert.NotEmpty(t, q.Ticker)
+		assert.False(t, q.Timestamp.IsZero())
+		assert.Greater(t, q.TngoLast, 0.0)
+		assert.Greater(t, q.PrevClose, 0.0)
+		if q.BidPrice != nil {
+			assert.Greater(t, *q.BidPrice, 0.0, "호가가 있으면 양수여야 한다")
+		}
+	}
+}
+
+// 없는 티커는 응답에서 빠진다.
+func TestIntegration_IEXUnknownTickerOmitted(t *testing.T) {
+	c := newClient(t)
+	qs, err := c.IEX.Quotes(context.Background(), []string{"AAPL", "NOSUCHTICKERXYZ"})
+	require.NoError(t, err)
+	assert.Len(t, qs, 1, "없는 티커는 빠지고 AAPL 만 온다")
+}
+
+func TestIntegration_IEXPrices(t *testing.T) {
+	c := newClient(t)
+	ps, err := c.IEX.Prices(context.Background(), "AAPL", &iex.PriceOptions{
+		StartDate:    time.Now().AddDate(0, 0, -5),
+		ResampleFreq: iex.Resample1Hour,
+	})
+	require.NoError(t, err)
+	for _, p := range ps {
+		assert.False(t, p.Date.IsZero())
+		assert.Greater(t, p.Close, 0.0)
+	}
+}
+
+// columns 에 volume 을 넣어야 거래량이 온다.
+func TestIntegration_IEXPricesVolume(t *testing.T) {
+	c := newClient(t)
+	ps, err := c.IEX.Prices(context.Background(), "AAPL", &iex.PriceOptions{
+		StartDate:    time.Now().AddDate(0, 0, -5),
+		ResampleFreq: iex.Resample1Hour,
+		Columns:      []string{"open", "high", "low", "close", "volume"},
+	})
+	require.NoError(t, err)
+	if len(ps) == 0 {
+		t.Skip("조회 구간이 전부 휴장일")
+	}
+	var withVolume int
+	for _, p := range ps {
+		if p.Volume > 0 {
+			withVolume++
+		}
+	}
+	assert.Positive(t, withVolume, "columns 에 volume 을 넣으면 일부 구간은 거래량이 채워진다")
 }

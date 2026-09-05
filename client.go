@@ -7,6 +7,7 @@ import (
 	"github.com/kenshin579/tiingo-go/eod"
 	"github.com/kenshin579/tiingo-go/forex"
 	"github.com/kenshin579/tiingo-go/fundamentals"
+	"github.com/kenshin579/tiingo-go/iex"
 	"github.com/kenshin579/tiingo-go/internal/httpclient"
 )
 
@@ -19,6 +20,7 @@ type Client struct {
 	Fundamentals *fundamentals.Client // 재무제표·일별 지표(Fundamentals, 별도 구독)
 	Crypto       *crypto.Client       // 암호화폐 페어 메타·시세·호가
 	Forex        *forex.Client        // 통화쌍 호가·시세
+	IEX          *iex.Client          // 미국 주식 실시간 스냅샷·인트라데이 시세
 }
 
 // NewClient 는 API 키로 Client 를 만든다. 키가 비어 있으면 에러다.
@@ -41,5 +43,6 @@ func NewClient(apiKey string, opts ...Option) (*Client, error) {
 	c.Fundamentals = fundamentals.New(hc)
 	c.Crypto = crypto.New(hc)
 	c.Forex = forex.New(hc)
+	c.IEX = iex.New(hc)
 	return c, nil
 }

@@ -43,9 +43,12 @@ cs, _ := c.Crypto.PricesFor(ctx, "btcusd", &crypto.PriceOptions{ResampleFreq: cr
 
 // 통화쌍 호가(복수 조회 가능)
 qs, _ := c.Forex.TopOfBook(ctx, []string{"eurusd", "usdjpy"})
+
+// IEX 실시간 스냅샷(장 마감 시 호가 필드는 nil)
+iqs, _ := c.IEX.Quotes(ctx, []string{"AAPL", "MSFT"})
 ```
 
-실행 가능한 예시: [`examples/eod`](examples/eod), [`examples/fundamentals`](examples/fundamentals), [`examples/crypto`](examples/crypto), [`examples/forex`](examples/forex).
+실행 가능한 예시: [`examples/eod`](examples/eod), [`examples/fundamentals`](examples/fundamentals), [`examples/crypto`](examples/crypto), [`examples/forex`](examples/forex), [`examples/iex`](examples/iex).
 
 ## 인증
 
@@ -69,12 +72,14 @@ qs, _ := c.Forex.TopOfBook(ctx, []string{"eurusd", "usdjpy"})
 | Crypto | `Crypto.TopOfBook` / `TopOfBookFor` | `GET /tiingo/crypto/top` |
 | Forex | `Forex.TopOfBook` | `GET /tiingo/fx/top` |
 | Forex | `Forex.Prices` | `GET /tiingo/fx/<tickers>/prices` |
+| IEX | `IEX.Quotes` | `GET /iex/` |
+| IEX | `IEX.Prices` | `GET /iex/<ticker>/prices` |
 
 \* Fundamentals 는 별도 구독(add-on)이다. 무료 플랜은 Dow 30 종목의 3년치만 제공하며, 권한 밖
 종목은 `APIError`(400/403)로 돌아온다.
 
-나머지 REST 그룹(News, Equity Realtime, IEX, BOATS, Fund Fees, Search, Dividends/Splits 등)과
-WebSocket 은 순차 추가 예정.
+나머지 REST 그룹(News, Equity Realtime, BOATS, Fund Fees, Search, Dividends/Splits)과 WebSocket 은
+순차 추가 예정.
 
 ## 날짜 타입
 
@@ -86,6 +91,12 @@ Tiingo 는 같은 API 에서 두 가지 날짜 형식을 쓴다 — 가격은 `2
 `types.Time`(루트 별칭 `tiingo.Time`)은 시각까지 보존한다. `statementLastUpdated` 처럼 갱신
 시각이 의미 있는 필드, 그리고 암호화폐 시세처럼 인트라데이 값이 오는 필드에 쓰며, 직렬화는
 RFC3339 다. 예를 들어 `resampleFreq=1min` 시세의 `date` 는 분 단위 시각이라 `Date` 로는 표현할 수 없다.
+
+## null 필드
+
+IEX 스냅샷은 장 마감 시간대에 호가·체결 관련 9개 필드가 `null` 로 온다. 값 타입으로 받으면 0 과
+구분되지 않으므로 해당 필드는 포인터(`*float64`, `*types.Time`)이며 `nil` 은 "값 없음"이다.
+없는 티커는 에러가 아니라 응답에서 빠지고 순서도 요청과 다르므로, 결과는 `Ticker` 필드로 찾는다.
 
 ## 에러 처리
 
