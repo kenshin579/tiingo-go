@@ -1,0 +1,20 @@
+[
+    {
+        "ticker": "eurusd",
+        "quoteTimestamp": "2026-09-05T08:11:12.679000+00:00",
+        "bidPrice": 1.1613,
+        "bidSize": 1000000.0,
+        "askPrice": 1.16138,
+        "askSize": 1000000.0,
+        "midPrice": 1.16134
+    },
+    {
+        "ticker": "usdjpy",
+        "quoteTimestamp": "2026-09-05T08:11:12.510000+00:00",
+        "bidPrice": 156.195,
+        "bidSize": 1000000.0,
+        "askPrice": 156.306,
+        "askSize": 1000000.0,
+        "midPrice": 156.2505
+    }
+]
