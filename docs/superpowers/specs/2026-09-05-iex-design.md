@@ -43,6 +43,9 @@ askPrice, askSize, bidPrice, bidSize, last, lastSaleTimestamp, lastSize, mid, qu
   에러가 아니라 `[]` 다(배치·티커 경로 모두 200). 따라서 결과 길이가 요청보다 짧을 수 있고, 호출자는
   이를 감안해야 한다.
 - **응답의 티커는 대문자**다. `?tickers=aapl` 로 요청해도 `"ticker":"AAPL"` 로 온다.
+- **응답 순서가 요청 순서와 다르다.** `tickers=aapl,msft,dcfc` 로 요청하면 `['MSFT','AAPL']` 로 온다
+  (실측). 없는 티커 누락과 겹치면 인덱스 대응이 완전히 깨지므로, 호출자는 반드시 `Ticker` 필드로
+  찾아야 한다 — doc 주석에 명시한다.
 - **시세에 거래량이 기본으로 없다.** 문서: "This value will only be exposed if explicitly passed to the
   `columns` request parameter." 실측으로도 5분봉 156행 어디에도 `volume` 키가 없었고,
   `columns=open,high,low,close,volume` 을 주면 `volume` 이 채워졌다(예: 223412.0).
@@ -196,7 +199,7 @@ type PriceOptions struct {
   것이고, 반대로 **개장 직후 첫 체결 전에는 `open`/`high`/`low` 가 null 일 가능성**이 있다. 그 경우
   값 타입인 이 필드들은 디코딩이 실패하지 않고 조용히 0 이 된다. 장중에 한 번 실호출해 확인하고,
   null 이 확인되면 해당 필드도 포인터로 바꾼다(공개 API 변경이므로 v0.5.x 안에서 처리).
-- 없는 티커가 조용히 빠지므로 `len(quotes) < len(tickers)` 가 정상이다. 어느 티커가 빠졌는지 알려면
-  호출자가 대조해야 한다 — doc 주석에 명시한다.
+- 없는 티커가 조용히 빠지므로 `len(quotes) < len(tickers)` 가 정상이고, **순서도 요청과 다르다**.
+  인덱스로 대응시키면 안 되고 `Ticker` 필드로 찾아야 한다 — doc 주석에 명시한다.
 - `/iex`(슬래시 없음)는 301 이다. Go 의 `http.Client` 는 리다이렉트를 따라가지만, 경로를 `/iex/` 로
   고정해 불필요한 왕복을 없앤다.
