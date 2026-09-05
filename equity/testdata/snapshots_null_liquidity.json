@@ -1,0 +1,50 @@
+[
+    {
+        "ticker": "AAPL",
+        "timestamp": "2026-09-04T19:59:34.935723167-04:00",
+        "open": 328.29,
+        "high": 328.915,
+        "low": 317.845,
+        "tngoLast": 320.08,
+        "prevClose": 328.29,
+        "volume": 1778528.0,
+        "lqSpread": 0.0005,
+        "lqBidPrice": 320.015,
+        "lqBidSize": 100,
+        "lqRefPrice": 320.08,
+        "lqAskPrice": 320.175,
+        "lqAskSize": 100
+    },
+    {
+        "ticker": "PXS",
+        "timestamp": "2026-09-04T15:59:59.494619846-04:00",
+        "open": 6.3,
+        "high": 6.47,
+        "low": 6.17,
+        "tngoLast": 6.2,
+        "prevClose": 6.21,
+        "volume": 7011.0,
+        "lqSpread": 0.001564,
+        "lqBidPrice": 6.195,
+        "lqBidSize": 100,
+        "lqRefPrice": 6.2,
+        "lqAskPrice": 6.205,
+        "lqAskSize": 100
+    },
+    {
+        "ticker": "AULT",
+        "timestamp": "2024-09-09T20:00:00+00:00",
+        "open": 0.208,
+        "high": 0.22,
+        "low": 0.205,
+        "tngoLast": 0.2149,
+        "volume": 972327,
+        "prevClose": 0.2044,
+        "lqRefPrice": 0.2149,
+        "lqSpread": null,
+        "lqBidPrice": null,
+        "lqBidSize": null,
+        "lqAskPrice": null,
+        "lqAskSize": null
+    }
+]
