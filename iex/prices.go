@@ -79,7 +79,7 @@ func (o *PriceOptions) params() map[string]string {
 
 // Prices 는 인트라데이 시세를 받는다. GET /iex/<ticker>/prices
 // 티커는 하나만 받는다 — 복수를 경로에 넣으면 Tiingo 가 404 를 돌려준다.
-// 휴장이거나 없는 티커면 에러가 아니라 빈 슬라이스를 돌려준다.
+// 휴장 구간이면 빈 슬라이스이고, 없는 티커면 404 라 APIError(StatusCode 404)가 온다.
 func (c *Client) Prices(ctx context.Context, ticker string, opts *PriceOptions) ([]Price, error) {
 	t := strings.TrimSpace(ticker)
 	if t == "" {

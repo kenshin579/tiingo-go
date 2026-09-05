@@ -58,6 +58,7 @@ func joinTickers(tickers []string) (string, error) {
 //
 // 없는 티커는 에러가 아니라 응답에서 빠지고 순서도 요청과 다를 수 있으므로,
 // 결과를 인덱스로 대응시키지 말고 Ticker 필드로 찾는다.
+// 비활성 종목은 Timestamp 가 한참 지난 값으로 오므로(실측 1년 이상) 최신성이 중요하면 확인한다.
 // 전 종목을 받으려면 AllSnapshots 를 쓴다 — 빈 목록은 에러다.
 func (c *Client) Snapshots(ctx context.Context, tickers []string) ([]Snapshot, error) {
 	joined, err := joinTickers(tickers)

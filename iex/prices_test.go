@@ -2,11 +2,13 @@ package iex
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"os"
 	"testing"
 	"time"
 
+	"github.com/kenshin579/tiingo-go/internal/httpclient"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -96,4 +98,13 @@ func TestPrices_EmptyArray_NotAnError(t *testing.T) {
 	ps, err := c.Prices(context.Background(), "aapl", nil)
 	require.NoError(t, err)
 	assert.Empty(t, ps)
+}
+
+// 없는 티커는 404 다 — 빈 슬라이스가 아니다. 주석이 틀렸던 부분이라 못 박는다.
+func TestPrices_NotFound(t *testing.T) {
+	c, _ := newStubClient(t, http.StatusNotFound, `{"detail":"Not found."}`)
+	_, err := c.Prices(context.Background(), "nosuchxyz", nil)
+	var apiErr *httpclient.APIError
+	require.True(t, errors.As(err, &apiErr))
+	assert.Equal(t, http.StatusNotFound, apiErr.StatusCode)
 }
