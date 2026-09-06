@@ -55,9 +55,13 @@ byISIN, _ := c.Search.SearchByISIN(ctx, "US0378331005", nil)
 
 // 통합 피드 스냅샷(여러 거래소·ATS·OTC). 유동성 지표는 없을 수 있어 포인터다
 es, _ := c.Equity.Snapshots(ctx, []string{"AAPL", "SPY"})
+
+// 배당수익률 시계열. 옵션 없이 부르면 상장 이후 전 기간이 온다
+ys, _ := c.CorporateActions.DistributionYield(ctx, "AAPL",
+    &corporateactions.YieldOptions{StartDate: time.Now().AddDate(0, -1, 0)})
 ```
 
-실행 가능한 예시: [`examples/eod`](examples/eod), [`examples/fundamentals`](examples/fundamentals), [`examples/crypto`](examples/crypto), [`examples/forex`](examples/forex), [`examples/iex`](examples/iex), [`examples/search`](examples/search), [`examples/equity`](examples/equity).
+실행 가능한 예시: [`examples/eod`](examples/eod), [`examples/fundamentals`](examples/fundamentals), [`examples/crypto`](examples/crypto), [`examples/forex`](examples/forex), [`examples/iex`](examples/iex), [`examples/search`](examples/search), [`examples/equity`](examples/equity), [`examples/corporateactions`](examples/corporateactions).
 
 ## 인증
 
@@ -88,12 +92,17 @@ es, _ := c.Equity.Snapshots(ctx, []string{"AAPL", "SPY"})
 | Equity Realtime | `Equity.Snapshots` | `GET /tiingo/equity/intraday/` |
 | Equity Realtime | `Equity.AllSnapshots` | `GET /tiingo/equity/intraday/` |
 | Equity Realtime | `Equity.Prices` | `GET /tiingo/equity/intraday/<ticker>/prices` |
+| Corporate Actions\*\* | `CorporateActions.DistributionYield` | `GET /tiingo/corporate-actions/<ticker>/distribution-yield` |
 
 \* Fundamentals 는 별도 구독(add-on)이다. 무료 플랜은 Dow 30 종목의 3년치만 제공하며, 권한 밖
 종목은 `APIError`(400/403)로 돌아온다.
 
-나머지 REST 그룹(News — 별도 플랜 필요, BOATS — 별도 등록 필요, Fund Fees, Dividends/Splits)과
-WebSocket 은 순차 추가 예정.
+\*\* Corporate Actions 는 이 그룹 5개 중 1개만 구현돼 있다. 배당 내역(distributions, 티커별·배치)과
+분할(splits, 티커별·배치)은 무료 키에서 403 이라 응답 형태를 확인할 수 없어 넣지 않았다.
+
+나머지 REST 그룹은 이 계정 권한으로 접근이 막혀 있다(2026-09-05 실측) — News 와 Fund Fees 는
+403 권한 없음, BOATS 는 유료 add-on, Corporate Actions 의 배당 내역·분할도 403 이다.
+남은 것은 WebSocket 이다.
 
 ## 날짜 타입
 
@@ -144,8 +153,9 @@ Tiingo 는 시간당·일당 요청 수와 월 대역폭으로 제한하며 분/
 go test ./...                                       # 단위 테스트
 TIINGO_API_KEY=... go test -tags integration ./...  # 실호출 통합 테스트
 go build -o /dev/null ./examples/eod                # 예제 빌드(레포 루트의 동명 디렉터리와 겹치면 -o 필요)
-go build -o /dev/null ./examples/search             # eod/·search/·equity/ 가 이에 해당한다
+go build -o /dev/null ./examples/search             # eod/·search/·equity/·corporateactions/ 가 이에 해당한다
 go build -o /dev/null ./examples/equity
+go build -o /dev/null ./examples/corporateactions
 ```
 
 ## 문서

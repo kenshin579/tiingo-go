@@ -15,8 +15,10 @@ const intradayPath = "/tiingo/equity/intraday/"
 // Snapshot 은 통합 피드 기준가·유동성 스냅샷이다.
 //
 // LqSpread·LqBidPrice·LqBidSize·LqAskPrice·LqAskSize 다섯 개는 통합 피드가 값을 내지 않으면
-// null 이라 포인터다 — 전 종목 조회 18,654건 중 8,185건(44%)이 그렇다. nil 은 "값 없음"이고
-// 0 과 구분된다. 이름이 비슷한 LqRefPrice 는 늘 채워져 값 타입이다.
+// null 이라 포인터다. nil 은 "값 없음"이고 0 과 구분된다.
+// 비어 있는 비율은 장 마감 후 경과 시간에 따라 달라진다 — 금요일 종가 직후에는 전 종목
+// 18,654건 중 8,185건(44%)이 비어 있었고, 하루 지난 뒤에는 전부 비어 있었다(실측).
+// 이름이 비슷한 LqRefPrice 는 늘 채워져 값 타입이다.
 type Snapshot struct {
 	Ticker     string     `json:"ticker"`     // 티커. 요청과 무관하게 대문자로 온다
 	Timestamp  types.Time `json:"timestamp"`  // 마지막 갱신 시각
