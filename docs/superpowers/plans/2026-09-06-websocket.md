@@ -1513,8 +1513,12 @@ for msg := range s.Messages() {
 Crypto 외 네 피드의 배열 매핑은 문서 기반이다 — 조사 시점에 FX·미국 주식 시장이 닫혀 있었고
 BOATS 는 계정 권한이 없다. 각 타입 주석에 검증 여부를 적어 두었다.
 
-연결이 끊기면 지수 backoff 로 자동 재연결하고 구독을 재전송한다. 소비가 느려 버퍼가 차면
-가장 오래된 메시지를 버리며, 누락 건수는 `s.Dropped()` 로 확인한다.
+연결이 끊기면 지수 backoff 로 자동 재연결하고 구독을 재전송한다. 서버가 30초마다 보내는
+하트비트가 90초(`WithReadTimeout` 으로 조정) 동안 끊기면 죽은 연결로 보고 다시 붙는다.
+재연결 횟수는 `s.Reconnects()` 로 확인한다 — 값이 오르면 그 사이 메시지가 빠졌을 수 있다.
+
+소비가 느려 버퍼가 차면 가장 오래된 메시지를 버리며, 누락 건수는 `s.Dropped()` 로 확인한다.
+전 종목을 받을 때는 기본 버퍼 256 이 부족할 수 있으므로 `WithBuffer` 로 늘린다.
 ````
 
 - [ ] **Step 2: 나머지 README 손질**
@@ -1537,8 +1541,9 @@ WebSocket 5종은 아래 절에 있다.
 
 - `**Module**:` 문단의 버전 문장을 `**v0.9.0 (2026-09-06)**` 으로 바꾸고, 기존 여덟 카테고리
   열거를 유지한 채 뒤에 WebSocket 문장을 붙인다:
-  `실시간은 c.Stream → WebSocket 5종(Crypto·Forex·IEX·Equity·BOATS, 채널 소비 + 자동 재연결;
-  배열 매핑 실측 검증은 Crypto 만, BOATS 는 계정 권한 403).`
+  `실시간은 c.Stream → WebSocket 5종(Crypto·Forex·IEX·Equity·BOATS, 채널 소비 + 자동 재연결 +
+  하트비트 기반 끊김 감지 + Reconnects()/Dropped() 관측; 배열 매핑 실측 검증은 Crypto 만,
+  Forex 는 문서 인덱스 표가 틀려 예시 산술로 바로잡음, BOATS 는 계정 권한 403).`
 - bash 블록의 예제 빌드 주석 충돌 목록에 `stream/` 을 더한다.
 - `**다음**:` 을 다음으로 바꾼다:
   `**다음**: moneyflow 통합. Tiingo 쪽은 REST·WebSocket 모두 계정 권한 한도까지 구현됐다.
