@@ -41,7 +41,9 @@
 - `GET /tiingo/corporate-actions/<ticker>/distributions`
 - `GET /tiingo/corporate-actions/distributions?exDate=...`
 - `GET /tiingo/corporate-actions/splits?exDate=...`
-- (splits 의 티커별 판도 같은 계열로 본다)
+- `GET /tiingo/corporate-actions/<ticker>/splits`
+
+네 개 모두 직접 호출해 403 을 확인했다(유추 아님). 그룹 5개 중 1개만 열려 있다.
 
 News·Fund Fees·BOATS 의 403 은 사유가 담긴 본문을 주는데, 이쪽 403 은 본문이 비어 있다.
 사유를 알 수 없으므로 "권한 없음" 이상은 단정하지 않는다.
