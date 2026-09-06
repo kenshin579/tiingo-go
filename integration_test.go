@@ -359,8 +359,11 @@ func TestIntegration_EquityAllSnapshots(t *testing.T) {
 			withLq++
 		}
 	}
-	assert.Positive(t, withLq, "일부는 유동성 지표가 채워져 있다")
-	assert.Less(t, withLq, len(ss), "일부는 비어 있다 — 포인터로 둔 이유다")
+	// 비어 있는 행이 있다는 것만 단정한다 — 포인터로 둔 이유가 이것이다.
+	// 채워진 행의 개수는 장 마감 후 경과 시간에 따라 달라진다. 실측상 금요일 종가 직후
+	// (토 오전)에는 44% 가 채워져 있었지만 하루 지난 일요일에는 0 이었다.
+	assert.Less(t, withLq, len(ss), "유동성 지표가 비어 있는 행이 있다")
+	t.Logf("유동성 지표가 채워진 행: %d / %d", withLq, len(ss))
 }
 
 func TestIntegration_EquityPrices(t *testing.T) {
