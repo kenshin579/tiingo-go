@@ -112,7 +112,7 @@ WebSocket 5종은 아래 절에 있다.
 ```go
 s, _ := c.Stream.Crypto(ctx, &stream.CryptoOptions{
     Tickers:   []string{"btcusd"},
-    Threshold: stream.CryptoTradesAndQuotes,
+    Threshold: stream.CryptoTradesAndQuotesLevel,
 })
 defer s.Close()
 
@@ -197,6 +197,7 @@ Tiingo 는 시간당·일당 요청 수와 월 대역폭으로 제한하며 분/
 
 ```bash
 go test ./...                                       # 단위 테스트
+go test ./stream/... -race                          # 스트림은 고루틴이 있어 race 검사 필수
 TIINGO_API_KEY=... go test -tags integration ./...  # 실호출 통합 테스트
 go build -o /dev/null ./examples/eod                # 예제 빌드(레포 루트의 동명 디렉터리와 겹치면 -o 필요)
 go build -o /dev/null ./examples/search             # eod/·search/·equity/·corporateactions/·stream/ 가 이에 해당한다

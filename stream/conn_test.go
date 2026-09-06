@@ -17,7 +17,7 @@ func TestStream_SubscribeAndReceive(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	s, err := c.Crypto(ctx, &CryptoOptions{Tickers: []string{"btcusd"}, Threshold: CryptoTradesAndQuotes})
+	s, err := c.Crypto(ctx, &CryptoOptions{Tickers: []string{"btcusd"}, Threshold: CryptoTradesAndQuotesLevel})
 	require.NoError(t, err)
 	defer s.Close()
 
@@ -340,7 +340,7 @@ func TestClient_EntryPoints(t *testing.T) {
 		{"forex", func(c *Client, ctx context.Context) (*Stream, error) { return c.Forex(ctx, nil) }, "/fx", `"thresholdLevel":5`},
 		{"iex", func(c *Client, ctx context.Context) (*Stream, error) { return c.IEX(ctx, nil) }, "/iex", `"thresholdLevel":6`},
 		{"equity", func(c *Client, ctx context.Context) (*Stream, error) { return c.Equity(ctx, nil) }, "/equity/intraday", `"thresholdLevel":6`},
-		{"boats", func(c *Client, ctx context.Context) (*Stream, error) { return c.BOATS(ctx, nil) }, "/boats", `"thresholdLevel":6`},
+		{"boats", func(c *Client, ctx context.Context) (*Stream, error) { return c.BOATS(ctx, nil) }, "/boats", `"thresholdLevel":3`},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

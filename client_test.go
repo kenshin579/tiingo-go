@@ -1,6 +1,7 @@
 package tiingo
 
 import (
+	"net/http"
 	"os"
 	"testing"
 	"time"
@@ -41,4 +42,12 @@ func TestNewClientFromEnv(t *testing.T) {
 	require.NoError(t, os.Unsetenv("TIINGO_API_KEY"))
 	_, err = NewClientFromEnv()
 	assert.Error(t, err, "환경변수 없으면 에러")
+}
+
+// 루트의 WithHTTPClient 가 스트림 클라이언트에도 전달된다.
+func TestNewClient_StreamInheritsHTTPClient(t *testing.T) {
+	hc := &http.Client{}
+	c, err := NewClient("key", WithHTTPClient(hc))
+	require.NoError(t, err)
+	assert.Same(t, hc, c.Stream.HTTPClient(), "같은 *http.Client 여야 한다")
 }

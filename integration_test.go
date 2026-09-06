@@ -422,7 +422,7 @@ func TestIntegration_StreamCrypto(t *testing.T) {
 
 	s, err := c.Stream.Crypto(ctx, &stream.CryptoOptions{
 		Tickers:   []string{"btcusd", "ethusd"},
-		Threshold: stream.CryptoTradesAndQuotes,
+		Threshold: stream.CryptoTradesAndQuotesLevel,
 	})
 	require.NoError(t, err)
 	defer s.Close()

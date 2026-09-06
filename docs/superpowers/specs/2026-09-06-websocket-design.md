@@ -261,3 +261,14 @@ func (a *arr) err() error
   askSize=6/askPrice=7 임을 증명한다. Crypto 와 같은 순서다. 표 숫자를 그대로 믿으면
   매도 가격과 수량이 뒤바뀐 채 컴파일·테스트가 통과한다.
 - Equity 의 두 메시지는 종류 문자가 없어 **길이로 구분**한다(3 vs 8). 구독 threshold 와 함께 본다.
+
+## 정정 (최종 리뷰, 2026-09-06)
+
+- **BOATS thresholdLevel 은 6 이 아니라 3 이다.** 이 스펙과 계획이 6 이라 적었는데 IEX/Equity 에서
+  복사한 오류였다. 문서(`boats.md:33,41,45,70`)는 3 이 유일한 공개 레벨이라고 네 번 명시한다.
+  계정이 403 이라 테스트가 잡지 못했고, 오히려 6 을 단정하는 테스트가 버그를 고정하고 있었다.
+- **Forex 상수 이름 `ForexTradesOnly` 는 뒤집힌 이름이었다.** 레벨 5 는 "ALL Top-of-Book updates"
+  이고 이 피드에는 체결 메시지가 없다. `ForexTopOfBookLevel` 로 바꿨다.
+- 임계값 상수 이름 규약을 `…Level` 접미사로 통일했다(메시지 타입 이름과의 충돌 회피).
+- 루트 `WithHTTPClient` 를 스트림에 전파한다. `coder/websocket` 이 `Timeout` 을 핸드셰이크 전용으로
+  변환하므로 안전하다. `WithBaseURL` 은 스킴이 달라 전파하지 않는다.

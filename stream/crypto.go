@@ -11,14 +11,14 @@ import (
 type CryptoThreshold int
 
 const (
-	CryptoTradesAndQuotes CryptoThreshold = 2 // 호가 + 체결
-	CryptoTradesOnly      CryptoThreshold = 5 // 체결만
+	CryptoTradesAndQuotesLevel CryptoThreshold = 2 // 호가 + 체결
+	CryptoTradesOnlyLevel      CryptoThreshold = 5 // 체결만
 )
 
 // CryptoOptions 는 crypto 스트림 구독 인자다.
 type CryptoOptions struct {
 	Tickers   []string        // 구독할 페어(btcusd 등). 비우면 전체
-	Threshold CryptoThreshold // 0 이면 CryptoTradesOnly(5)
+	Threshold CryptoThreshold // 0 이면 CryptoTradesOnlyLevel(5)
 }
 
 // CryptoTrade 는 암호화폐 체결이다.
@@ -35,7 +35,7 @@ type CryptoTrade struct {
 
 func (CryptoTrade) isMessage() {}
 
-// CryptoQuote 는 암호화폐 호가다. Threshold 가 CryptoTradesAndQuotes 일 때만 온다.
+// CryptoQuote 는 암호화폐 호가다. Threshold 가 CryptoTradesAndQuotesLevel 일 때만 온다.
 //
 // 배열: ["Q", ticker, date, exchange, bidSize, bidPrice, midPrice, askSize, askPrice] (9개)
 // 이 매핑은 실호출로 검증했다(2026-09-06, 호가 18건, mid=(bid+ask)/2 검산 일치).

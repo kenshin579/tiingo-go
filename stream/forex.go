@@ -10,13 +10,13 @@ import (
 type ForexThreshold int
 
 const (
-	ForexTradesOnly ForexThreshold = 5 // 체결만(호가 없음)
+	ForexTopOfBookLevel ForexThreshold = 5 // 호가(top-of-book) 전부. 이 피드에는 체결 메시지가 없다
 )
 
 // ForexOptions 는 forex 스트림 구독 인자다.
 type ForexOptions struct {
 	Tickers   []string       // 구독할 통화쌍(eurusd 등). 비우면 전체
-	Threshold ForexThreshold // 0 이면 ForexTradesOnly(5)
+	Threshold ForexThreshold // 0 이면 ForexTopOfBookLevel(5)
 }
 
 // ForexQuote 는 외환 호가다. Forex 피드는 호가만 보내고 체결은 없다.

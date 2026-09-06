@@ -10,13 +10,13 @@ import (
 type BOATSThreshold int
 
 const (
-	BOATSTopOfBookAndTrades BOATSThreshold = 6 // BOATS 가 제공하는 유일한 레벨(호가+체결)
+	BOATSTopOfBookAndTradesLevel BOATSThreshold = 3 // BOATS 가 제공하는 유일한 공개 레벨(호가+체결). 문서: thresholdLevel 3
 )
 
 // BOATSOptions 는 BOATS 스트림 구독 인자다.
 type BOATSOptions struct {
 	Tickers   []string       // 구독할 티커. 비우면 전체
-	Threshold BOATSThreshold // 0 이면 BOATSTopOfBookAndTrades(6)
+	Threshold BOATSThreshold // 0 이면 BOATSTopOfBookAndTradesLevel(6)
 }
 
 // BOATSQuote 는 BOATS 호가다.

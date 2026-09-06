@@ -27,7 +27,7 @@ func main() {
 
 	s, err := c.Stream.Crypto(ctx, &stream.CryptoOptions{
 		Tickers:   []string{"btcusd", "ethusd"},
-		Threshold: stream.CryptoTradesAndQuotes,
+		Threshold: stream.CryptoTradesAndQuotesLevel,
 	})
 	if err != nil {
 		log.Fatal(err)

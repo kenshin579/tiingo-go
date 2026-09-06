@@ -146,7 +146,7 @@ func (c *Client) Crypto(ctx context.Context, opts *CryptoOptions) (*Stream, erro
 	}
 	th := opts.Threshold
 	if th == 0 {
-		th = CryptoTradesOnly
+		th = CryptoTradesOnlyLevel
 	}
 	return c.open(ctx, "/crypto", eventData{ThresholdLevel: int(th), Tickers: opts.Tickers}, decodeCrypto)
 }
@@ -158,7 +158,7 @@ func (c *Client) Forex(ctx context.Context, opts *ForexOptions) (*Stream, error)
 	}
 	th := opts.Threshold
 	if th == 0 {
-		th = ForexTradesOnly
+		th = ForexTopOfBookLevel
 	}
 	return c.open(ctx, "/fx", eventData{ThresholdLevel: int(th), Tickers: opts.Tickers}, decodeForex)
 }
@@ -195,7 +195,10 @@ func (c *Client) BOATS(ctx context.Context, opts *BOATSOptions) (*Stream, error)
 	}
 	th := opts.Threshold
 	if th == 0 {
-		th = BOATSTopOfBookAndTrades
+		th = BOATSTopOfBookAndTradesLevel
 	}
 	return c.open(ctx, "/boats", eventData{ThresholdLevel: int(th), Tickers: opts.Tickers}, decodeBOATS)
 }
+
+// HTTPClient 는 핸드셰이크에 쓰는 HTTP 클라이언트다. nil 이면 기본 클라이언트를 쓴다.
+func (c *Client) HTTPClient() *http.Client { return c.httpClient }
