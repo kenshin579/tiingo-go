@@ -17,6 +17,7 @@ import (
 	"github.com/kenshin579/tiingo-go/fundamentals"
 	"github.com/kenshin579/tiingo-go/iex"
 	"github.com/kenshin579/tiingo-go/search"
+	"github.com/kenshin579/tiingo-go/stream"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -410,4 +411,76 @@ func TestIntegration_DistributionYieldUnknownTicker(t *testing.T) {
 	ys, err := c.CorporateActions.DistributionYield(context.Background(), "NOSUCHTICKERXYZ", nil)
 	require.NoError(t, err)
 	assert.Empty(t, ys)
+}
+
+// crypto 는 24시간 거래되므로 언제 돌려도 메시지가 온다.
+// mid = (bid+ask)/2 검산으로 배열 매핑이 살아 있는지 매번 다시 확인한다.
+func TestIntegration_StreamCrypto(t *testing.T) {
+	c := newClient(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	s, err := c.Stream.Crypto(ctx, &stream.CryptoOptions{
+		Tickers:   []string{"btcusd", "ethusd"},
+		Threshold: stream.CryptoTradesAndQuotes,
+	})
+	require.NoError(t, err)
+	defer s.Close()
+
+	var got int
+	for msg := range s.Messages() {
+		switch m := msg.(type) {
+		case stream.CryptoTrade:
+			assert.NotEmpty(t, m.Ticker)
+			assert.NotEmpty(t, m.Exchange)
+			assert.Greater(t, m.LastPrice, 0.0)
+			assert.False(t, m.Date.IsZero())
+		case stream.CryptoQuote:
+			assert.NotEmpty(t, m.Ticker)
+			assert.Greater(t, m.BidPrice, 0.0)
+			assert.Greater(t, m.AskPrice, 0.0)
+			assert.InDelta(t, (m.BidPrice+m.AskPrice)/2, m.MidPrice, 1e-6,
+				"매핑이 맞으면 mid 가 검산된다")
+		default:
+			t.Fatalf("예상 밖 메시지 타입 %T", msg)
+		}
+		got++
+		if got >= 5 {
+			break
+		}
+	}
+	assert.GreaterOrEqual(t, got, 1, "20초 안에 최소 한 건은 온다")
+	assert.Equal(t, int64(0), s.Reconnects(), "20초 안에 재연결이 일어나면 안 된다")
+}
+
+// 구독 확인 id 가 온다 — 인증이 실제로 통했다는 증거다.
+func TestIntegration_StreamSubscriptionID(t *testing.T) {
+	c := newClient(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	s, err := c.Stream.Crypto(ctx, &stream.CryptoOptions{Tickers: []string{"btcusd"}})
+	require.NoError(t, err)
+	defer s.Close()
+
+	assert.Eventually(t, func() bool { return s.SubscriptionID() != 0 },
+		10*time.Second, 100*time.Millisecond)
+}
+
+// BOATS 는 계정 권한이 없어 E 프레임(403)이 온다. 그 경로가 에러로 잘 흐르고 재연결하지 않는지 확인한다.
+// 이 테스트가 실패하면 계정에 BOATS 권한이 생긴 것일 수 있다 — 그렇다면 좋은 소식이니 그대로 보고한다.
+func TestIntegration_StreamBOATSForbidden(t *testing.T) {
+	c := newClient(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	s, err := c.Stream.BOATS(ctx, nil)
+	require.NoError(t, err)
+	defer s.Close()
+
+	for range s.Messages() { //nolint:revive // 채널이 닫힐 때까지 비운다
+	}
+	require.Error(t, s.Err(), "권한이 없으므로 에러로 끝난다")
+	assert.Contains(t, s.Err().Error(), "403")
+	assert.Equal(t, int64(0), s.Reconnects(), "권한 거부 뒤에는 재연결하지 않는다")
 }
