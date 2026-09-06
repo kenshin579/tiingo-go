@@ -3,6 +3,7 @@ package tiingo
 import (
 	"errors"
 
+	"github.com/kenshin579/tiingo-go/corporateactions"
 	"github.com/kenshin579/tiingo-go/crypto"
 	"github.com/kenshin579/tiingo-go/eod"
 	"github.com/kenshin579/tiingo-go/equity"
@@ -18,13 +19,14 @@ import (
 type Client struct {
 	http *httpclient.Client
 
-	EOD          *eod.Client          // 일별 시세·메타(End-of-Day)
-	Fundamentals *fundamentals.Client // 재무제표·일별 지표(Fundamentals, 별도 구독)
-	Crypto       *crypto.Client       // 암호화폐 페어 메타·시세·호가
-	Forex        *forex.Client        // 통화쌍 호가·시세
-	IEX          *iex.Client          // 미국 주식 실시간 스냅샷·인트라데이 시세
-	Search       *search.Client       // 티커·이름·ISIN 자산 검색
-	Equity       *equity.Client       // 통합 피드 기준가·유동성 스냅샷, 인트라데이 시세
+	EOD              *eod.Client              // 일별 시세·메타(End-of-Day)
+	Fundamentals     *fundamentals.Client     // 재무제표·일별 지표(Fundamentals, 별도 구독)
+	Crypto           *crypto.Client           // 암호화폐 페어 메타·시세·호가
+	Forex            *forex.Client            // 통화쌍 호가·시세
+	IEX              *iex.Client              // 미국 주식 실시간 스냅샷·인트라데이 시세
+	Search           *search.Client           // 티커·이름·ISIN 자산 검색
+	Equity           *equity.Client           // 통합 피드 기준가·유동성 스냅샷, 인트라데이 시세
+	CorporateActions *corporateactions.Client // 배당수익률(배당 내역·분할은 권한 403 이라 미구현)
 }
 
 // NewClient 는 API 키로 Client 를 만든다. 키가 비어 있으면 에러다.
@@ -50,5 +52,6 @@ func NewClient(apiKey string, opts ...Option) (*Client, error) {
 	c.IEX = iex.New(hc)
 	c.Search = search.New(hc)
 	c.Equity = equity.New(hc)
+	c.CorporateActions = corporateactions.New(hc)
 	return c, nil
 }
