@@ -20,12 +20,20 @@ BOATS 는 403(영구)이었다. 나머지 넷의 배열 매핑은 **문서 기�
 것이 구현의 일부다. 위치 배열은 매핑이 틀려도 컴파일·테스트가 통과하고 값만 조용히 바뀌므로,
 엄격 디코딩(Task 3)이 유일한 방어선이다.
 
-**가장 틀리기 쉬운 지점**: Crypto 와 Forex 의 매도 쪽 순서가 반대다.
+**가장 틀리기 쉬운 지점**: **Forex 문서의 인덱스 표가 틀렸다.**
 
-| | 인덱스 6 | 인덱스 7 | 인덱스 8 |
-|---|---|---|---|
-| Crypto `Q` | midPrice | **askSize** | **askPrice** |
-| Forex `Q` | **askPrice** | **askSize** | (없음) |
+표는 `Ask Price`를 6, `Ask Size`를 7 이라 적지만, 같은 문서의 예시가 그 반대임을 증명한다:
+
+```
+["Q","eurnok",ts, 5000000.0, 9.6764, 9.678135, 5000000.0, 9.67987]
+                   bidSize   bidPrice  mid      askSize   askPrice
+```
+
+`idx6 = 5000000.0` 은 명백히 수량이고, `mid = (bid+ask)/2` 는 **`idx7` 을 매도호가로 놓을 때만**
+맞는다(`(9.6764+9.67987)/2 = 9.678135`). 즉 **Forex 는 Crypto 와 같은 순서**다.
+
+**표의 숫자가 아니라 예시의 산술을 따른다.** Equity 유동성·BOATS 호가는 같은 방식으로 검산했고
+표와 예시가 일치했다 — Forex 만 어긋난다.
 
 **참고할 형제 구현**: `/Users/user/src/workspace_moneyflow/toss-go/stream/` 이 같은
 `coder/websocket` 으로 같은 문제(재연결·백오프·스텁 서버)를 이미 풀었다. `conn.go` 의 `backoff`,
@@ -638,18 +646,23 @@ func TestDecodeCrypto_Quote(t *testing.T) {
 	assert.InDelta(t, (q.BidPrice+q.AskPrice)/2, q.MidPrice, 1e-6, "매핑이 맞으면 mid 가 검산된다")
 }
 
-// Forex 는 매도 쪽 순서가 Crypto 와 반대다 — 가장 틀리기 쉬운 지점이라 못 박는다.
-func TestDecodeForex_Quote_AskOrderDiffersFromCrypto(t *testing.T) {
-	// [type, ticker, date, bidSize, bidPrice, midPrice, askPrice, askSize]
-	raw := json.RawMessage(`["Q","eurusd","2026-09-06T03:55:54+00:00",1000000,1.0850,1.08505,1.0851,2000000]`)
+// Forex 문서의 인덱스 표는 askPrice=6 이라 적지만 문서 예시의 산술은 askPrice=7 임을 증명한다.
+// 실제 문서 예시(eurnok)를 그대로 써서 못 박는다 — 값을 지어내면 검산이 무의미해진다.
+func TestDecodeForex_Quote_DocIndexTableIsWrong(t *testing.T) {
+	// ["Q", ticker, date, bidSize, bidPrice, midPrice, askSize, askPrice]
+	raw := json.RawMessage(`["Q","eurnok","2019-07-05T15:49:15.157000+00:00",5000000.0,9.6764,9.678135,5000000.0,9.67987]`)
 	m, err := decodeForex(raw)
 	require.NoError(t, err)
 
 	q, ok := m.(ForexQuote)
 	require.True(t, ok)
-	assert.InDelta(t, 1.0851, q.AskPrice, 1e-9, "인덱스 6 이 AskPrice 다")
-	assert.InDelta(t, 2000000, q.AskSize, 1e-9, "인덱스 7 이 AskSize 다")
-	assert.InDelta(t, (q.BidPrice+q.AskPrice)/2, q.MidPrice, 1e-6)
+	assert.Equal(t, "eurnok", q.Ticker)
+	assert.InDelta(t, 5000000.0, q.BidSize, 1e-9)
+	assert.InDelta(t, 9.6764, q.BidPrice, 1e-9)
+	assert.InDelta(t, 5000000.0, q.AskSize, 1e-9, "인덱스 6 은 수량이다(표는 가격이라 적었다)")
+	assert.InDelta(t, 9.67987, q.AskPrice, 1e-9, "인덱스 7 이 가격이다(표는 수량이라 적었다)")
+	assert.InDelta(t, (q.BidPrice+q.AskPrice)/2, q.MidPrice, 1e-9,
+		"매핑이 맞으면 mid 가 검산된다 — 이 검산이 표를 반증한 근거다")
 }
 
 // IEX 기준가는 종류 문자가 없고 3원소다.
@@ -789,7 +802,6 @@ func (CryptoTrade) isMessage() {}
 //
 // 배열: ["Q", ticker, date, exchange, bidSize, bidPrice, midPrice, askSize, askPrice] (9개)
 // 이 매핑은 실호출로 검증했다(2026-09-06, mid=(bid+ask)/2 검산 일치).
-// 매도 쪽이 askSize -> askPrice 순서라 ForexQuote 와 반대다.
 type CryptoQuote struct {
 	Ticker   string     // 페어
 	Date     types.Time // 호가 시각
@@ -863,11 +875,12 @@ func arrKind(raw json.RawMessage) (string, error) {
 ```
 
 `stream/forex.go`, `stream/iex.go`, `stream/equity.go`, `stream/boats.go` 도 같은 형태로 만든다.
-각 배열 매핑은 아래 표를 따른다. **인덱스를 따르고 문서 표의 행 출력 순서를 따르지 않는다.**
+각 배열 매핑은 아래 표를 따른다. **이 표는 문서의 인덱스 숫자가 아니라 문서 예시의 산술로
+검증한 결과다** — Forex 는 문서 인덱스 표가 틀렸으므로 아래 표를 그대로 쓴다.
 
 | 파일 | 타입 | 배열 |
 |---|---|---|
-| `forex.go` | `ForexQuote` | `["Q", ticker, date, bidSize, bidPrice, midPrice, askPrice, askSize]` (8) |
+| `forex.go` | `ForexQuote` | `["Q", ticker, date, bidSize, bidPrice, midPrice, askSize, askPrice]` (8) |
 | `iex.go` | `IEXReferencePrice` | `[date, ticker, refPrice]` (3, 종류 문자 없음) |
 | `equity.go` | `EquityReferencePrice` | `[date, ticker, refPrice]` (3) |
 | `equity.go` | `EquityLiquidity` | `[date, ticker, spread, bidSize, bidPrice, refPrice, askPrice, askSize]` (8) |
@@ -876,9 +889,10 @@ func arrKind(raw json.RawMessage) (string, error) {
 
 세부 규칙:
 
-- `ForexQuote`·`IEXReferencePrice`·`Equity*`·`BOATS*` 의 doc 주석 둘째 줄은
-  **"이 매핑은 문서 기반이며 실호출로 검증하지 못했다"** 로 적고, 왜인지(시장 시간 / 계정 권한 403)
-  덧붙인다.
+- `IEXReferencePrice`·`Equity*`·`BOATS*` 의 doc 주석 둘째 줄은 **"이 매핑은 문서 기반이며
+  실호출로 검증하지 못했다"** 로 적고, 왜인지(시장 시간 / 계정 권한 403) 덧붙인다.
+- `ForexQuote` 는 다르게 적는다 — **문서 인덱스 표가 틀렸고 예시의 산술로 바로잡았다**는 사실과,
+  Crypto 와 같은 순서라는 점을 주석에 남긴다. 라이브 검증은 여전히 남아 있다.
 - `IEX`·`Equity` 는 종류 문자가 없으므로 `arrKind` 를 쓰지 않는다. `decodeEquity` 는 **배열 길이**로
   3 → 기준가, 8 → 유동성으로 가르고, 둘 다 아니면 에러다. `decodeIEX` 는 3원소만 받는다.
 - `BOATSTrade.Break` 는 종류 문자가 `"B"` 일 때 true 다. 판매 조건 4개는 `[4]string` 이 아니라

@@ -56,16 +56,28 @@ firehose" 라고 명시한다. IEX 는 거래소 협약 없이 thresholdLevel 6(
 → `mid = (80046.4 + 80046.41)/2 = 80046.405` 로 검산 일치. 지수 표기(`6.517e-5`)도 섞여 온다.
 thresholdLevel: `2` = 호가+체결, `5` = 체결만.
 
-**Forex** — 미검증(조사 시점 FX 휴장)
+**Forex** — 라이브 미검증(조사 시점 FX 휴장)이나 **문서 예시로 산술 검증함**
 
 ```
-["Q", ticker, date, bidSize, bidPrice, midPrice, askPrice, askSize]                  8개
+["Q", ticker, date, bidSize, bidPrice, midPrice, askSize, askPrice]                  8개
 ```
 
-**⚠ Crypto 와 매도 쪽 순서가 반대다.** Crypto 는 `askSize`(7) → `askPrice`(8) 인데
-Forex 는 `askPrice`(6) → `askSize`(7) 이다. 문서 표의 행 출력 순서가 인덱스와 어긋나 있어
-(AskSize 행이 AskPrice 행보다 먼저 인쇄됨) 눈으로 읽으면 틀리기 쉽다. **인덱스를 따른다.**
-위치 배열이라 뒤바뀌어도 컴파일·테스트가 통과하고 값만 조용히 틀린다.
+**⚠ 문서의 인덱스 표가 틀렸다.** 표는 `Ask Size`를 7, `Ask Price`를 6 이라 적지만, **같은 문서의
+예시 응답이 그 반대임을 증명한다**:
+
+```
+["Q","eurnok","2019-07-05T15:49:15.157000+00:00", 5000000.0, 9.6764, 9.678135, 5000000.0, 9.67987]
+                                                   bidSize   bidPrice  mid      askSize   askPrice
+```
+
+`idx6 = 5000000.0` 은 명백히 수량이고, `mid = (bidPrice + askPrice)/2` 검산은 **`idx7` 을
+매도호가로 놓을 때만** 맞는다(`(9.6764 + 9.67987)/2 = 9.678135`). 두 번째 예시(gbpaud)도 같다.
+
+즉 **Forex 는 Crypto 와 같은 순서**(bidSize, bidPrice, mid, askSize, askPrice)다.
+문서 표의 행 출력 순서가 오히려 옳고 인덱스 숫자가 뒤바뀌어 인쇄됐다.
+**표의 숫자가 아니라 예시의 산술을 따른다.**
+
+같은 방식으로 Equity 유동성·BOATS 호가도 검산했고 그쪽은 표와 예시가 일치한다.
 
 **IEX** — 미검증(조사 시점 미국 장 마감)
 
@@ -179,7 +191,7 @@ type CryptoTrade struct {
 }
 
 // CryptoQuote 는 암호화폐 호가다. thresholdLevel 2 에서만 온다.
-// 배열 매핑은 실측으로 확인했다 — 매도 쪽이 askSize, askPrice 순서라 Forex 와 반대다.
+// 배열 매핑은 실측으로 확인했다(mid=(bid+ask)/2 검산 일치).
 type CryptoQuote struct {
 	Ticker   string     // 페어
 	Date     types.Time // 호가 시각
@@ -192,8 +204,8 @@ type CryptoQuote struct {
 }
 
 // ForexQuote 는 통화쌍 호가다.
-// 배열 매핑은 문서 기반이다(조사 시점 FX 휴장으로 미검증) —
-// 매도 쪽이 askPrice, askSize 순서로 Crypto 와 반대이므로 특히 주의한다.
+// 배열 매핑은 문서 예시의 산술로 검증했다(라이브 미검증) —
+// 문서의 인덱스 표는 askPrice=6 이라 적지만 예시가 askPrice=7 임을 증명한다.
 type ForexQuote struct { ... }
 ```
 
@@ -245,5 +257,7 @@ func (a *arr) err() error
 - **검증된 건 Crypto 뿐이다.** Forex 는 일요일 21시 UTC, IEX·Equity 는 미국 장중에 확인 가능하고
   BOATS 는 영영 불가능하다. 이 사실을 패키지 doc·README·각 타입 주석에 남겨,
   나중에 확인할 목록이 코드에 남게 한다.
-- **Crypto 와 Forex 의 매도 순서가 반대다.** 구현 시 가장 틀리기 쉬운 지점이다.
+- **Forex 문서의 인덱스 표가 틀렸다.** 표는 askPrice=6/askSize=7 이라 적지만 예시의 산술은
+  askSize=6/askPrice=7 임을 증명한다. Crypto 와 같은 순서다. 표 숫자를 그대로 믿으면
+  매도 가격과 수량이 뒤바뀐 채 컴파일·테스트가 통과한다.
 - Equity 의 두 메시지는 종류 문자가 없어 **길이로 구분**한다(3 vs 8). 구독 threshold 와 함께 본다.
