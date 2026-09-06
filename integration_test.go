@@ -9,6 +9,7 @@ import (
 	"time"
 
 	tiingo "github.com/kenshin579/tiingo-go"
+	"github.com/kenshin579/tiingo-go/corporateactions"
 	"github.com/kenshin579/tiingo-go/crypto"
 	"github.com/kenshin579/tiingo-go/eod"
 	"github.com/kenshin579/tiingo-go/equity"
@@ -374,4 +375,36 @@ func TestIntegration_EquityPrices(t *testing.T) {
 		assert.False(t, p.Date.IsZero())
 		assert.Greater(t, p.Close, 0.0)
 	}
+}
+
+func TestIntegration_DistributionYield(t *testing.T) {
+	c := newClient(t)
+	ys, err := c.CorporateActions.DistributionYield(context.Background(), "AAPL",
+		&corporateactions.YieldOptions{StartDate: time.Now().AddDate(0, -1, 0)})
+	require.NoError(t, err)
+	require.NotEmpty(t, ys)
+	for _, y := range ys {
+		assert.False(t, y.Date.IsZero())
+		assert.GreaterOrEqual(t, y.TrailingDiv1Y, 0.0, "수익률은 음수가 될 수 없다")
+	}
+}
+
+// 기간을 좁히면 실제로 줄어든다 — 문서 표에 없는 파라미터라 실 API 로 확인해 둔다.
+func TestIntegration_DistributionYieldDateRange(t *testing.T) {
+	c := newClient(t)
+	narrow, err := c.CorporateActions.DistributionYield(context.Background(), "AAPL",
+		&corporateactions.YieldOptions{
+			StartDate: time.Now().AddDate(0, 0, -10),
+			EndDate:   time.Now().AddDate(0, 0, -5),
+		})
+	require.NoError(t, err)
+	assert.Less(t, len(narrow), 10, "닷새 구간이라 거래일 수만큼만 온다")
+}
+
+// 없는 티커는 404 가 아니라 빈 슬라이스다.
+func TestIntegration_DistributionYieldUnknownTicker(t *testing.T) {
+	c := newClient(t)
+	ys, err := c.CorporateActions.DistributionYield(context.Background(), "NOSUCHTICKERXYZ", nil)
+	require.NoError(t, err)
+	assert.Empty(t, ys)
 }
