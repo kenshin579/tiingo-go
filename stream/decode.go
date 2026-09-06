@@ -32,6 +32,9 @@ func newArr(raw json.RawMessage, want int) (*arr, error) {
 	return &arr{raw: xs}, nil
 }
 
+// arrFrom 은 이미 파싱된 원소 목록으로 커서를 만든다. 길이 검사는 호출자가 이미 했을 때 쓴다.
+func arrFrom(xs []json.RawMessage) *arr { return &arr{raw: xs} }
+
 // fail 은 첫 에러만 기록한다.
 func (a *arr) fail(i int, err error) {
 	if a.first == nil {
