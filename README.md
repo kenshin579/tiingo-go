@@ -61,7 +61,7 @@ ys, _ := c.CorporateActions.DistributionYield(ctx, "AAPL",
     &corporateactions.YieldOptions{StartDate: time.Now().AddDate(0, -1, 0)})
 ```
 
-실행 가능한 예시: [`examples/eod`](examples/eod), [`examples/fundamentals`](examples/fundamentals), [`examples/crypto`](examples/crypto), [`examples/forex`](examples/forex), [`examples/iex`](examples/iex), [`examples/search`](examples/search), [`examples/equity`](examples/equity), [`examples/corporateactions`](examples/corporateactions).
+실행 가능한 예시: [`examples/eod`](examples/eod), [`examples/fundamentals`](examples/fundamentals), [`examples/crypto`](examples/crypto), [`examples/forex`](examples/forex), [`examples/iex`](examples/iex), [`examples/search`](examples/search), [`examples/equity`](examples/equity), [`examples/corporateactions`](examples/corporateactions), [`examples/stream`](examples/stream).
 
 ## 인증
 
@@ -102,7 +102,53 @@ ys, _ := c.CorporateActions.DistributionYield(ctx, "AAPL",
 
 나머지 REST 그룹은 이 계정 권한으로 접근이 막혀 있다(2026-09-05 실측) — News 와 Fund Fees 는
 403 권한 없음, BOATS 는 유료 add-on, Corporate Actions 의 배당 내역·분할도 403 이다.
-남은 것은 WebSocket 이다.
+WebSocket 5종은 아래 절에 있다.
+
+## WebSocket
+
+실시간 스트리밍은 REST 와 별개 연결이며 `c.Stream` 으로 접근한다. 채널로 소비하고,
+채널이 닫힌 뒤 `Err()` 로 종료 사유를 확인한다.
+
+```go
+s, _ := c.Stream.Crypto(ctx, &stream.CryptoOptions{
+    Tickers:   []string{"btcusd"},
+    Threshold: stream.CryptoTradesAndQuotesLevel,
+})
+defer s.Close()
+
+for msg := range s.Messages() {
+    switch m := msg.(type) {
+    case stream.CryptoTrade:
+        fmt.Println(m.Ticker, m.Exchange, m.LastPrice)
+    case stream.CryptoQuote:
+        fmt.Println(m.Ticker, m.BidPrice, m.AskPrice)
+    }
+}
+if err := s.Err(); err != nil { /* ctx 취소·서버 거부 등 */ }
+```
+
+| 피드 | 메서드 | 엔드포인트 | 배열 매핑 검증 |
+| --- | --- | --- | --- |
+| Crypto | `Stream.Crypto` | `wss://api.tiingo.com/crypto` | 실호출 |
+| Forex | `Stream.Forex` | `wss://api.tiingo.com/fx` | 문서 예시 산술\* |
+| IEX | `Stream.IEX` | `wss://api.tiingo.com/iex` | 문서 |
+| Equity Realtime | `Stream.Equity` | `wss://api.tiingo.com/equity/intraday` | 문서 |
+| BOATS | `Stream.BOATS` | `wss://api.tiingo.com/boats` | 불가(계정 권한 403) |
+
+\* Tiingo 의 forex 문서는 인덱스 표가 틀렸다 — 표는 askPrice=6/askSize=7 이라 적지만 같은 문서의
+예시에서 `mid=(bid+ask)/2` 검산은 askSize=6/askPrice=7 일 때만 맞는다. 코드는 예시를 따른다.
+
+데이터가 필드명이 아니라 **배열 위치**로 오므로, 배열이 기대보다 짧거나 타입이 다르면 값을
+조용히 바꾸는 대신 에러를 낸다. 기대보다 긴 배열은 통과시킨다(Tiingo 가 필드를 추가할 수 있다).
+Crypto 외 네 피드의 매핑은 조사 시점에 FX·미국 주식 시장이 닫혀 있어 실호출로 확인하지
+못했다. 각 타입 주석에 검증 여부를 적어 두었다.
+
+연결이 끊기면 지수 backoff 로 자동 재연결하고 구독을 재전송한다. 서버가 30초마다 보내는
+하트비트가 90초(`WithReadTimeout`) 동안 끊기면 죽은 연결로 보고 다시 붙는다. 재연결 횟수는
+`s.Reconnects()` 로 확인한다 — 값이 오르면 그 사이 메시지가 빠졌을 수 있다.
+
+소비가 느려 버퍼가 차면 가장 오래된 메시지를 버리며, 누락 건수는 `s.Dropped()` 로 확인한다.
+전 종목을 받을 때(`Tickers` 를 비움)는 기본 버퍼 256 이 부족할 수 있으므로 `WithBuffer` 로 늘린다.
 
 ## 날짜 타입
 
@@ -151,11 +197,13 @@ Tiingo 는 시간당·일당 요청 수와 월 대역폭으로 제한하며 분/
 
 ```bash
 go test ./...                                       # 단위 테스트
+go test ./stream/... -race                          # 스트림은 고루틴이 있어 race 검사 필수
 TIINGO_API_KEY=... go test -tags integration ./...  # 실호출 통합 테스트
 go build -o /dev/null ./examples/eod                # 예제 빌드(레포 루트의 동명 디렉터리와 겹치면 -o 필요)
-go build -o /dev/null ./examples/search             # eod/·search/·equity/·corporateactions/ 가 이에 해당한다
+go build -o /dev/null ./examples/search             # eod/·search/·equity/·corporateactions/·stream/ 가 이에 해당한다
 go build -o /dev/null ./examples/equity
 go build -o /dev/null ./examples/corporateactions
+go build -o /dev/null ./examples/stream
 ```
 
 ## 문서

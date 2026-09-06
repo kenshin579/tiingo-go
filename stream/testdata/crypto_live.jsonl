@@ -1,0 +1,31 @@
+{"response": {"code": 200, "message": "Success"}, "data": {"subscriptionId": 49804739}, "messageType": "I"}
+{"response": {"code": 200, "message": "HeartBeat"}, "messageType": "H"}
+{"service":"crypto_data","messageType":"A","data":["T","ethusd","2026-09-06T06:17:23.371785+00:00","kraken",1.3086942400000001,2509.5076432528654]}
+{"service":"crypto_data","messageType":"A","data":["Q","btcusd","2026-09-06T06:17:23.477686+00:00","gdax",0.00729493,79917.44,79917.445,0.00558949,79917.45]}
+{"service":"crypto_data","messageType":"A","data":["Q","ethusd","2026-09-06T06:17:23.790378+00:00","gdax",0.99999905,2509.44,2509.4449999999997,2.00122337,2509.45]}
+{"service":"crypto_data","messageType":"A","data":["Q","btcusd","2026-09-06T06:17:24.770679+00:00","gdax",0.00329413,79917.44,79917.445,0.00426013,79917.45]}
+{"service":"crypto_data","messageType":"A","data":["Q","ethusd","2026-09-06T06:17:24.891358+00:00","gdax",0.99999905,2509.44,2509.4449999999997,1.98488216,2509.45]}
+{"service":"crypto_data","messageType":"A","data":["Q","btcusd","2026-09-06T06:17:25.971090+00:00","gdax",0.00329408,79917.44,79917.445,0.00426013,79917.45]}
+{"service":"crypto_data","messageType":"A","data":["T","btcusd","2026-09-06T06:17:25.971090+00:00","gdax",0.013622119999999998,79916.7291212748]}
+{"service":"crypto_data","messageType":"A","data":["T","btcusd","2026-09-06T06:17:26.543000+00:00","gemini",6.255e-5,79927.99]}
+{"service":"crypto_data","messageType":"A","data":["Q","ethusd","2026-09-06T06:17:26.794987+00:00","gdax",0.99999905,2509.44,2509.4449999999997,1.98290962,2509.45]}
+{"service":"crypto_data","messageType":"A","data":["T","ethusd","2026-09-06T06:17:26.794987+00:00","gdax",0.057999039999999995,2509.4500000000003]}
+{"service":"crypto_data","messageType":"A","data":["Q","btcusd","2026-09-06T06:17:27.023735+00:00","gdax",0.0034359,79917.44,79917.445,0.00426013,79917.45]}
+{"service":"crypto_data","messageType":"A","data":["Q","btcusd","2026-09-06T06:17:28.095066+00:00","gdax",0.00343581,79917.44,79917.445,0.0039031,79917.45]}
+{"service":"crypto_data","messageType":"A","data":["T","ethusd","2026-09-06T06:17:28.795296+00:00","kraken",0.802568,2509.4543498993235]}
+{"service":"crypto_data","messageType":"A","data":["Q","btcusd","2026-09-06T06:17:29.162403+00:00","gdax",0.00343581,79917.44,79917.445,0.00158536,79917.45]}
+{"service":"crypto_data","messageType":"A","data":["T","btcusd","2026-09-06T06:17:29.964000+00:00","bitfinex",0.00025666,79991.99999999999]}
+{"service":"crypto_data","messageType":"A","data":["Q","btcusd","2026-09-06T06:17:30.244526+00:00","gdax",0.00343544,79917.44,79917.445,0.00515987,79917.45]}
+{"service":"crypto_data","messageType":"A","data":["Q","ethusd","2026-09-06T06:17:30.254128+00:00","gdax",0.00654992,2509.44,2509.4449999999997,2.72639498,2509.45]}
+{"service":"crypto_data","messageType":"A","data":["Q","ethusd","2026-09-06T06:17:30.422367+00:00","binance",0.0578,2508.42,2508.91,0.7873,2509.4]}
+{"service":"crypto_data","messageType":"A","data":["Q","btcusd","2026-09-06T06:17:31.627564+00:00","gdax",0.00940366,79917.44,79917.445,0.17707607,79917.45]}
+{"service":"crypto_data","messageType":"A","data":["T","btcusd","2026-09-06T06:17:31.627564+00:00","gdax",0.00534254,79917.44999887692]}
+{"service":"crypto_data","messageType":"A","data":["Q","ethusd","2026-09-06T06:17:33.054466+00:00","gdax",0.19847332,2509.16,2509.1949999999997,1.44844723,2509.23]}
+{"service":"crypto_data","messageType":"A","data":["T","ethusd","2026-09-06T06:17:33.054466+00:00","gdax",2.2451323999999997,2509.4025107640427]}
+{"service":"crypto_data","messageType":"A","data":["T","ethusd","2026-09-06T06:17:33.058000+00:00","bitfinex",0.055,2511.6]}
+{"service":"crypto_data","messageType":"A","data":["Q","btcusd","2026-09-06T06:17:33.108877+00:00","gdax",0.00940356,79917.44,79917.445,0.17648268,79917.45]}
+{"service":"crypto_data","messageType":"A","data":["Q","btcusd","2026-09-06T06:17:35.794916+00:00","gdax",0.00015166,79914.91,79914.91500000001,0.01776762,79914.92]}
+{"service":"crypto_data","messageType":"A","data":["Q","btcusd","2026-09-06T06:17:37.157750+00:00","gdax",0.10029305,79914.91,79914.91500000001,0.0211075,79914.92]}
+{"service":"crypto_data","messageType":"A","data":["T","btcusd","2026-09-06T06:17:37.157750+00:00","gdax",0.05133949,79916.06034702914]}
+{"service":"crypto_data","messageType":"A","data":["Q","ethusd","2026-09-06T06:17:38.479400+00:00","gdax",0.09764738,2509.05,2509.0550000000003,2.60729771,2509.06]}
+{"service":"crypto_data","messageType":"A","data":["T","ethusd","2026-09-06T06:17:38.479400+00:00","gdax",0.25922832,2509.1365631316826]}
