@@ -12,6 +12,7 @@ import (
 	"github.com/kenshin579/tiingo-go/iex"
 	"github.com/kenshin579/tiingo-go/internal/httpclient"
 	"github.com/kenshin579/tiingo-go/search"
+	"github.com/kenshin579/tiingo-go/stream"
 )
 
 // Client 는 tiingo-go 라이브러리의 단일 진입점이다.
@@ -27,6 +28,7 @@ type Client struct {
 	Search           *search.Client           // 티커·이름·ISIN 자산 검색
 	Equity           *equity.Client           // 통합 피드 기준가·유동성 스냅샷, 인트라데이 시세
 	CorporateActions *corporateactions.Client // 배당수익률(배당 내역·분할은 권한 403 이라 미구현)
+	Stream           *stream.Client           // 실시간 WebSocket 스트리밍(REST 와 별개 연결)
 }
 
 // NewClient 는 API 키로 Client 를 만든다. 키가 비어 있으면 에러다.
@@ -53,5 +55,6 @@ func NewClient(apiKey string, opts ...Option) (*Client, error) {
 	c.Search = search.New(hc)
 	c.Equity = equity.New(hc)
 	c.CorporateActions = corporateactions.New(hc)
+	c.Stream = stream.New(apiKey)
 	return c, nil
 }

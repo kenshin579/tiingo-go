@@ -20,6 +20,7 @@ func TestNewClient(t *testing.T) {
 	assert.NotNil(t, c.Search)
 	assert.NotNil(t, c.Equity)
 	assert.NotNil(t, c.CorporateActions)
+	assert.NotNil(t, c.Stream)
 
 	_, err = NewClient("")
 	assert.Error(t, err, "빈 키는 에러")
